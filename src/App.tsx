@@ -301,9 +301,9 @@ const Game: React.FC = () => {
           >
             {powerUp.type === 'extra-life' ? '+' :
              powerUp.type === 'time-freeze' ? '❄️' :
-             powerUp.type === 'double-points' ? '2x' :
+             powerUp.type === 'double-points' ? '+10' :
              powerUp.type === 'lightning' ? '⚡️' :
-             powerUp.type === 'lava-shield' ? '🛡️' : '💀'}
+             powerUp.type === 'lava-shield' ? '🛡️' : '🧙‍♀️'}
           </div>
         ))}
 
