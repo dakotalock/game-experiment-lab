@@ -49,9 +49,9 @@ const Game: React.FC = () => {
   const songs = [
     { id: 1, name: 'Song 1', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
     { id: 2, name: 'Song 2', src: 'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Chad_Crouch/Arps/Chad_Crouch_-_Algorithms.mp3' },
-    { id: 3, name: 'Song 3', src: 'https://www.zapsplat.com/wp-content/uploads/2024/12/zapsplat_game_music_loop_epic_battle_001.mp3' }, // New Song 3
-    { id: 4, name: 'Song 4', src: 'https://www.zapsplat.com/wp-content/uploads/2024/12/zapsplat_game_music_loop_retro_arcade_001.mp3' }, // New Song 4
-    { id: 5, name: 'Song 5', src: 'https://www.zapsplat.com/wp-content/uploads/2024/12/zapsplat_game_music_loop_ambient_001.mp3' }, // New Song 5
+    { id: 3, name: 'Song 3', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' }, // New Song 3
+    { id: 4, name: 'Song 4', src: 'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Chad_Crouch/Arps/Chad_Crouch_-_Drifting.mp3' }, // New Song 4
+    { id: 5, name: 'Song 5', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3' }, // New Song 5
   ];
 
   const [selectedSong, setSelectedSong] = useState(songs[0]);
