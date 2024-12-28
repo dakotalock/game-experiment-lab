@@ -63,6 +63,18 @@ const Game: React.FC = () => {
 
   const [selectedSong, setSelectedSong] = useState(songs[0]); // Default to first song in the list
 
+  // Load SoundCloud SDK
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://w.soundcloud.com/player/api.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
   const handleSongChange = (id: number) => {
     const song = songs.find((song) => song.id === id);
     if (song) {
@@ -277,24 +289,18 @@ const Game: React.FC = () => {
 
   const startMusic = () => {
     if (selectedSong.id === 1 && soundCloudRef.current) {
-      // SoundCloud embed autoplay
-      const iframe = soundCloudRef.current;
-      const widget = (window as any).SC.Widget(iframe);
+      const widget = (window as any).SC.Widget(soundCloudRef.current);
       widget.play();
     } else if (audioPlayerRef.current) {
-      // AudioPlayer autoplay
       audioPlayerRef.current.audio.current.play();
     }
   };
 
   const stopMusic = () => {
     if (selectedSong.id === 1 && soundCloudRef.current) {
-      // SoundCloud embed stop
-      const iframe = soundCloudRef.current;
-      const widget = (window as any).SC.Widget(iframe);
+      const widget = (window as any).SC.Widget(soundCloudRef.current);
       widget.pause();
     } else if (audioPlayerRef.current) {
-      // AudioPlayer stop
       audioPlayerRef.current.audio.current.pause();
     }
   };
