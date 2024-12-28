@@ -12,7 +12,7 @@ interface Target {
   color: string;
   rotation: number;
   spawnTime: number;
-  type: 'normal' | 'slime' | 'mini';
+  type: 'normal' | 'slime' | 'mini'; // Updated to include 'mini'
   size: number;
 }
 
