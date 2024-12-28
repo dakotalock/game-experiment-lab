@@ -24,14 +24,14 @@ interface PowerUp {
 
 const Game: React.FC = () => {
   const [score, setScore] = useState<number>(0);
-  const [lives, setLives] = useState<number>(5);
+  const [lives, setLives] = useState<number>(0); // Changed to initialize to 0
   const [gameOver, setGameOver] = useState<boolean>(false);
   const [gameStarted, setGameStarted] = useState<boolean>(false);
   const [targets, setTargets] = useState<Target[]>([]);
   const [powerUps, setPowerUps] = useState<PowerUp[]>([]);
   const [combo, setCombo] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [difficulty, setDifficulty] = useState<'easy' | 'normal' | 'hard'>('normal'); // New state for difficulty
+  const [difficulty, setDifficulty] = useState<'easy' | 'normal' | 'hard'>('normal');
   const audioPlayerRef = useRef<any>(null);
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const targetSize: number = 30;
@@ -179,7 +179,7 @@ const Game: React.FC = () => {
   const resetGame = () => {
     setGameStarted(false);
     setScore(0);
-    setLives(5);
+    setLives(5); // Reset lives to 5
     setGameOver(false);
     setTargets([]);
     setPowerUps([]);
@@ -232,7 +232,7 @@ const Game: React.FC = () => {
 
   return (
     <div className="flex-container">
-      <h1 className="text-5xl font-extrabold mb-8 text-white">Gabriel&apos;s Game</h1>
+      <h1 className="text-5xl font-extrabold mb-8 text-white">Gabriel's Game</h1>
       <h2 className="text-xl text-gray-400 mt-4">Created by Dakota Lock for Gabriel</h2>
 
       <div className="hidden">
@@ -307,7 +307,7 @@ const Game: React.FC = () => {
 
       <div className="score-display">
         <div className="text-xl text-white">Score: {score}</div>
-        <div className="text-xl text-white">Lives: {lives}</div>
+        <div className="text-xl text-white">Lives: {lives}</div> {/* Correctly displays lives */}
         <div className="text-xl text-white">Combo: x{combo}</div>
       </div>
 
