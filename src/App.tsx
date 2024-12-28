@@ -40,6 +40,7 @@ const Game: React.FC = () => {
   const [difficulty, setDifficulty] = useState<'easy' | 'normal' | 'hard'>('normal');
   const [showInstructions, setShowInstructions] = useState<boolean>(false);
   const audioPlayerRef = useRef<any>(null);
+  const soundCloudRef = useRef<HTMLIFrameElement>(null);
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const targetSize: number = 30;
   const gameWidth: number = 600;
@@ -209,7 +210,7 @@ const Game: React.FC = () => {
         if (lives <= 1) {
           setGameOver(true);
           setGameStarted(false);
-          audioPlayerRef.current?.audio.current?.pause();
+          stopMusic();
         }
         break;
       case 'lightning':
@@ -268,10 +269,34 @@ const Game: React.FC = () => {
       if (newLives <= 0) {
         setGameOver(true);
         setGameStarted(false);
-        audioPlayerRef.current?.audio.current?.pause();
+        stopMusic();
       }
       return newLives;
     });
+  };
+
+  const startMusic = () => {
+    if (selectedSong.id === 1 && soundCloudRef.current) {
+      // SoundCloud embed autoplay
+      const iframe = soundCloudRef.current;
+      const widget = (window as any).SC.Widget(iframe);
+      widget.play();
+    } else if (audioPlayerRef.current) {
+      // AudioPlayer autoplay
+      audioPlayerRef.current.audio.current.play();
+    }
+  };
+
+  const stopMusic = () => {
+    if (selectedSong.id === 1 && soundCloudRef.current) {
+      // SoundCloud embed stop
+      const iframe = soundCloudRef.current;
+      const widget = (window as any).SC.Widget(iframe);
+      widget.pause();
+    } else if (audioPlayerRef.current) {
+      // AudioPlayer stop
+      audioPlayerRef.current.audio.current.pause();
+    }
   };
 
   const startGame = () => {
@@ -282,10 +307,7 @@ const Game: React.FC = () => {
     setPowerUps([]);
     setCombo(0);
     setGameStarted(true);
-
-    if (audioPlayerRef.current) {
-      audioPlayerRef.current.audio.current.play();
-    }
+    startMusic();
   };
 
   const resetGame = () => {
@@ -296,11 +318,7 @@ const Game: React.FC = () => {
     setTargets([]);
     setPowerUps([]);
     setCombo(0);
-
-    if (audioPlayerRef.current) {
-      audioPlayerRef.current.audio.current.pause();
-      audioPlayerRef.current.audio.current.currentTime = 0;
-    }
+    stopMusic();
   };
 
   useEffect(() => {
@@ -344,7 +362,7 @@ const Game: React.FC = () => {
               if (newLives <= 0) {
                 setGameOver(true);
                 setGameStarted(false);
-                audioPlayerRef.current?.audio.current?.pause();
+                stopMusic();
               }
               return Math.max(newLives, 0);
             });
@@ -444,8 +462,9 @@ const Game: React.FC = () => {
       <div className="hidden">
         {selectedSong.id === 1 ? (
           <iframe
-            width="100%"
-            height="166"
+            ref={soundCloudRef}
+            width="0"
+            height="0"
             scrolling="no"
             frameBorder="no"
             allow="autoplay"
