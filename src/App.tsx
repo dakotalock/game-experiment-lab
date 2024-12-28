@@ -11,7 +11,7 @@ interface Target {
   id: number;
   color: string;
   rotation: number;
-  spawnTime: number; // Added for despawn logic
+  spawnTime: number;
 }
 
 type PowerUpType = 'extra-life' | 'time-freeze' | 'double-points' | 'skull' | 'lightning' | 'lava-shield';
@@ -23,6 +23,7 @@ interface PowerUp {
   dy: number;
   id: number;
   type: PowerUpType;
+  spawnTime: number;
 }
 
 const Game: React.FC = () => {
@@ -35,7 +36,7 @@ const Game: React.FC = () => {
   const [combo, setCombo] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [difficulty, setDifficulty] = useState<'easy' | 'normal' | 'hard'>('normal');
-  const [showInstructions, setShowInstructions] = useState<boolean>(false); // Added for instructions
+  const [showInstructions, setShowInstructions] = useState<boolean>(false);
   const audioPlayerRef = useRef<any>(null);
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const targetSize: number = 30;
@@ -46,15 +47,13 @@ const Game: React.FC = () => {
   const powerUpSpawnInterval: number = 5000 / 2;
   const powerUpDuration: number = 5000;
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-
   const targetRotationSpeed: number = 2;
 
-  // Updated songs array with reliable and tested URLs
   const songs = [
     { id: 1, name: 'Song 1', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
     { id: 2, name: 'Song 2', src: 'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Chad_Crouch/Arps/Chad_Crouch_-_Algorithms.mp3' },
     { id: 3, name: 'Song 3', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3' },
-    { id: 4, name: 'Song 4', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' }, // SoundHelix for reliability
+    { id: 4, name: 'Song 4', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
     { id: 5, name: 'Song 5', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3' },
   ];
 
@@ -133,7 +132,7 @@ const Game: React.FC = () => {
       id: Date.now() + Math.random(),
       color,
       rotation: 0,
-      spawnTime: Date.now(), // Added for despawn logic
+      spawnTime: Date.now(),
     };
     setTargets((prevTargets) => [...prevTargets, newTarget]);
   };
@@ -141,8 +140,8 @@ const Game: React.FC = () => {
   const spawnPowerUp = () => {
     const x = Math.random() * (gameWidth - targetSize);
     const y = Math.random() * (gameHeight - targetSize);
-    const dx = (Math.random() - 0.5) * targetSpeed; // Added movement
-    const dy = (Math.random() - 0.5) * targetSpeed; // Added movement
+    const dx = (Math.random() - 0.5) * targetSpeed;
+    const dy = (Math.random() - 0.5) * targetSpeed;
     const powerUpTypes: PowerUpType[] = ['extra-life', 'time-freeze', 'double-points', 'skull', 'lightning', 'lava-shield'];
     const type: PowerUpType = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
     const newPowerUp: PowerUp = {
@@ -152,6 +151,7 @@ const Game: React.FC = () => {
       dy,
       id: Date.now() + Math.random(),
       type,
+      spawnTime: Date.now(),
     };
     setPowerUps((prevPowerUps) => [...prevPowerUps, newPowerUp]);
 
@@ -184,7 +184,7 @@ const Game: React.FC = () => {
 
   const startGame = () => {
     setScore(0);
-    setLives(difficulty === 'easy' ? 5 : difficulty === 'normal' ? 3 : 1);
+    setLives(difficulty === 'easy' ? 10 : difficulty === 'normal' ? 3 : 1);
     setGameOver(false);
     setTargets([]);
     setPowerUps([]);
@@ -199,7 +199,7 @@ const Game: React.FC = () => {
   const resetGame = () => {
     setGameStarted(false);
     setScore(0);
-    setLives(5);
+    setLives(difficulty === 'easy' ? 10 : difficulty === 'normal' ? 3 : 1);
     setGameOver(false);
     setTargets([]);
     setPowerUps([]);
@@ -215,12 +215,32 @@ const Game: React.FC = () => {
     if (gameStarted && !gameOver) {
       const movementInterval = setInterval(() => {
         setTargets((prevTargets) => {
-          const updatedTargets = prevTargets.map((target) => ({
-            ...target,
-            x: target.x + target.dx,
-            y: target.y + target.dy,
-            rotation: (target.rotation + targetRotationSpeed) % 360,
-          }));
+          const updatedTargets = prevTargets.map((target) => {
+            let { x, y, dx, dy } = target;
+
+            // Update position
+            x += dx;
+            y += dy;
+
+            // Bounce off walls
+            if (x < 0 || x > gameWidth - targetSize) {
+              dx = -dx;
+              x = x < 0 ? 0 : gameWidth - targetSize;
+            }
+            if (y < 0 || y > gameHeight - targetSize) {
+              dy = -dy;
+              y = y < 0 ? 0 : gameHeight - targetSize;
+            }
+
+            return {
+              ...target,
+              x,
+              y,
+              dx,
+              dy,
+              rotation: (target.rotation + targetRotationSpeed) % 360,
+            };
+          });
 
           // Check for expired targets (45 seconds)
           const expiredTargets = updatedTargets.filter(
@@ -231,12 +251,7 @@ const Game: React.FC = () => {
           }
 
           const filteredTargets = updatedTargets.filter(
-            (target) =>
-              target.x > -targetSize &&
-              target.x < gameWidth &&
-              target.y > -targetSize &&
-              target.y < gameHeight &&
-              Date.now() - target.spawnTime <= 45000 // Keep only non-expired targets
+            (target) => Date.now() - target.spawnTime <= 45000
           );
 
           return filteredTargets;
@@ -244,18 +259,28 @@ const Game: React.FC = () => {
 
         // Add movement for power-ups
         setPowerUps((prevPowerUps) => {
-          const updatedPowerUps = prevPowerUps.map((powerUp) => ({
-            ...powerUp,
-            x: powerUp.x + powerUp.dx,
-            y: powerUp.y + powerUp.dy,
-          }));
+          const updatedPowerUps = prevPowerUps.map((powerUp) => {
+            let { x, y, dx, dy } = powerUp;
+
+            // Update position
+            x += dx;
+            y += dy;
+
+            // Bounce off walls for power-ups
+            if (x < 0 || x > gameWidth - targetSize) {
+              dx = -dx;
+              x = x < 0 ? 0 : gameWidth - targetSize;
+            }
+            if (y < 0 || y > gameHeight - targetSize) {
+              dy = -dy;
+              y = y < 0 ? 0 : gameHeight - targetSize;
+            }
+
+            return { ...powerUp, x, y };
+          });
 
           const filteredPowerUps = updatedPowerUps.filter(
-            (powerUp) =>
-              powerUp.x > -targetSize &&
-              powerUp.x < gameWidth &&
-              powerUp.y > -targetSize &&
-              powerUp.y < gameHeight
+            (powerUp) => Date.now() - powerUp.spawnTime <= powerUpDuration
           );
 
           return filteredPowerUps;
@@ -295,18 +320,17 @@ const Game: React.FC = () => {
           <h3>How to Play</h3>
           <ul>
             <li>Click on the moving targets to score points.</li>
-            <li>If a target isn't clicked within 45 seconds, you lose a life.</li>
-            <li>If you miss the target, you lose a life.</li>
+            <li>If a target despawns without being clicked, you lose a life.</li>
             <li>Use power-ups to gain advantages or face penalties.</li>
           </ul>
           <h3>Power-Ups</h3>
           <ul>
-            <li><strong>+ Extra Life</strong>: Gives Extra life</li>
-            <li><strong>❄️ Freeze Power-up</strong>: Freezes targets for 3 seconds</li>
-            <li><strong>+10 Power-up</strong>: Gain 10 points</li>
-            <li><strong>⚡️Lightning Power-up</strong>: Destroy all targets and gain points</li>
-            <li><strong>🛡️Lava Shield Power-up</strong>: Destroy half the targets, gain points, and gain 2 lives</li>
-            <li><strong>🧙‍♀️Witch Trap</strong>: Lose a life</li>
+            <li><strong>+</strong>: Extra life</li>
+            <li><strong>❄️</strong>: Freeze targets for 3 seconds</li>
+            <li><strong>+10</strong>: Gain 10 points</li>
+            <li><strong>⚡️</strong>: Destroy all targets and gain points</li>
+            <li><strong>🛡️</strong>: Destroy half the targets, gain points, and gain 2 lives</li>
+            <li><strong>🧙‍♀️</strong>: Lose a life</li>
           </ul>
           <button
             className="close-instructions-button"
@@ -373,8 +397,8 @@ const Game: React.FC = () => {
             {powerUp.type === 'extra-life' ? '+' :
              powerUp.type === 'time-freeze' ? '❄️' :
              powerUp.type === 'double-points' ? '+10' :
-             powerUp.type === 'lightning' ? '⚡️' :
-             powerUp.type === 'lava-shield' ? '🛡️' : '🧙‍♀️'}
+             powerUp.type === 'skull' ? '髑髅' :
+             powerUp.type === 'lightning' ? '⚡️' : '🛡️'}
           </div>
         ))}
 
