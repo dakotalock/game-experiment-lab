@@ -70,37 +70,90 @@ const Game: React.FC = () => {
     return color;
   };
 
+  const spawnTarget = () => {
+    const x = Math.random() * (gameWidth - targetSize);
+    const y = Math.random() * (gameHeight - targetSize);
+    const dx = (Math.random() - 0.5) * targetSpeed;
+    const dy = (Math.random() - 0.5) * targetSpeed;
+    const color = getRandomColor();
+    let type: 'normal' | 'slime' | 'mini' = 'normal';
+    if (Math.random() < 0.1) {
+      type = 'slime';
+    }
+    let size: number;
+    switch (type) {
+      case 'slime':
+        size = targetSize * 1.2;
+        break;
+      case 'mini':
+        size = targetSize / 2;
+        break;
+      case 'normal':
+        size = targetSize;
+        break;
+      default:
+        size = targetSize;
+        break;
+    }
+    const newTarget: Target = {
+      x,
+      y,
+      dx,
+      dy,
+      id: Date.now() + Math.random(),
+      color,
+      rotation: 0,
+      spawnTime: Date.now(),
+      type,
+      size,
+    };
+    setTargets((prevTargets) => [...prevTargets, newTarget]);
+  };
+
   const handleTargetClick = (id: number) => {
     if (gameOver) return;
     setTargets((prevTargets) => {
       const updatedTargets = prevTargets.filter((target) => target.id !== id);
       const clickedTarget = prevTargets.find((target) => target.id === id);
-      if (clickedTarget && clickedTarget.type === 'slime') {
-        const newMiniTarget1: Target = {
-          x: clickedTarget.x,
-          y: clickedTarget.y,
-          dx: (Math.random() - 0.5) * targetSpeed,
-          dy: (Math.random() - 0.5) * targetSpeed,
-          id: Date.now() + Math.random(),
-          color: getRandomColor(),
-          rotation: 0,
-          spawnTime: Date.now(),
-          type: 'mini',
-          size: targetSize / 2,
-        };
-        const newMiniTarget2: Target = {
-          x: clickedTarget.x,
-          y: clickedTarget.y,
-          dx: (Math.random() - 0.5) * targetSpeed,
-          dy: (Math.random() - 0.5) * targetSpeed,
-          id: Date.now() + Math.random(),
-          color: getRandomColor(),
-          rotation: 0,
-          spawnTime: Date.now(),
-          type: 'mini',
-          size: targetSize / 2,
-        };
-        return [...updatedTargets, newMiniTarget1, newMiniTarget2];
+      if (clickedTarget) {
+        switch (clickedTarget.type) {
+          case 'slime':
+            // Split into two mini targets
+            const newMiniTarget1: Target = {
+              x: clickedTarget.x,
+              y: clickedTarget.y,
+              dx: (Math.random() - 0.5) * targetSpeed,
+              dy: (Math.random() - 0.5) * targetSpeed,
+              id: Date.now() + Math.random(),
+              color: getRandomColor(),
+              rotation: 0,
+              spawnTime: Date.now(),
+              type: 'mini',
+              size: targetSize / 2,
+            };
+            const newMiniTarget2: Target = {
+              x: clickedTarget.x,
+              y: clickedTarget.y,
+              dx: (Math.random() - 0.5) * targetSpeed,
+              dy: (Math.random() - 0.5) * targetSpeed,
+              id: Date.now() + Math.random(),
+              color: getRandomColor(),
+              rotation: 0,
+              spawnTime: Date.now(),
+              type: 'mini',
+              size: targetSize / 2,
+            };
+            return [...updatedTargets, newMiniTarget1, newMiniTarget2];
+          case 'mini':
+            // Handle mini target click
+            return updatedTargets;
+          case 'normal':
+            // Handle normal target click
+            return updatedTargets;
+          default:
+            // This should never happen
+            return updatedTargets;
+        }
       }
       return updatedTargets;
     });
@@ -163,32 +216,6 @@ const Game: React.FC = () => {
       default:
         break;
     }
-  };
-
-  const spawnTarget = () => {
-    const x = Math.random() * (gameWidth - targetSize);
-    const y = Math.random() * (gameHeight - targetSize);
-    const dx = (Math.random() - 0.5) * targetSpeed;
-    const dy = (Math.random() - 0.5) * targetSpeed;
-    const color = getRandomColor();
-    let type: 'normal' | 'slime' | 'mini' = 'normal';
-    if (Math.random() < 0.1) {
-      type = 'slime';
-    }
-    const size = type === 'slime' ? targetSize * 1.2 : type === 'mini' ? targetSize / 2 : targetSize;
-    const newTarget: Target = {
-      x,
-      y,
-      dx,
-      dy,
-      id: Date.now() + Math.random(),
-      color,
-      rotation: 0,
-      spawnTime: Date.now(),
-      type,
-      size,
-    };
-    setTargets((prevTargets) => [...prevTargets, newTarget]);
   };
 
   const spawnPowerUp = () => {
@@ -425,29 +452,31 @@ const Game: React.FC = () => {
         onMouseMove={handleMouseMove}
         onClick={handleGameAreaClick}
       >
-        {targets.map((target) => (
-          <div
-            key={target.id}
-            className="target"
-            style={{
-              position: 'absolute',
-              left: target.x,
-              top: target.y,
-              width: target.size,
-              height: target.size,
-              backgroundColor:
-                target.type === 'slime' ? '#66CCFF' : target.type === 'mini' ? '#FF66CC' : target.color,
-              borderRadius:
-                target.type === 'slime' ? '50%' : target.type === 'mini' ? '50%' : '10%',
-              transform: `rotate(${target.rotation}deg)`,
-              boxShadow: `0 0 10px ${target.color}`,
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleTargetClick(target.id);
-            }}
-          />
-        ))}
+        {targets.map((target) => {
+          const backgroundColor = target.type === 'slime' ? '#66CCFF' : target.type === 'mini' ? '#FF66CC' : target.color;
+          const borderRadius = target.type === 'slime' || target.type === 'mini' ? '50%' : '10%';
+          return (
+            <div
+              key={target.id}
+              className="target"
+              style={{
+                position: 'absolute',
+                left: target.x,
+                top: target.y,
+                width: target.size,
+                height: target.size,
+                backgroundColor: backgroundColor,
+                borderRadius: borderRadius,
+                transform: `rotate(${target.rotation}deg)`,
+                boxShadow: `0 0 10px ${target.color}`,
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleTargetClick(target.id);
+              }}
+            />
+          );
+        })}
 
         {powerUps.map((powerUp) => (
           <div
