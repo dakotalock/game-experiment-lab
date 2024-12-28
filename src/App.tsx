@@ -21,11 +21,12 @@ interface PowerUp {
   id: number;
   type: PowerUpType;
   isRemoving?: boolean;
+  isAnimating?: boolean;
 }
 
 const Game: React.FC = () => {
   const [score, setScore] = useState<number>(0);
-  const [lives, setLives] = useState<number>(0); // Changed to initialize to 0
+  const [lives, setLives] = useState<number>(0);
   const [gameOver, setGameOver] = useState<boolean>(false);
   const [gameStarted, setGameStarted] = useState<boolean>(false);
   const [targets, setTargets] = useState<Target[]>([]);
@@ -67,50 +68,15 @@ const Game: React.FC = () => {
     const clickedPowerUp = powerUps.find((pu) => pu.id === id);
     if (!clickedPowerUp) return;
 
-    // Handle power-up effects first
-    if (clickedPowerUp.type === 'extra-life') {
-      setLives((prevLives) => prevLives + 1);
-    } else if (clickedPowerUp.type === 'time-freeze') {
-      setCombo(0);
-      setTargets((prevTargets) =>
-        prevTargets.map((target) => ({
-          ...target,
-          dx: 0,
-          dy: 0,
-        }))
-      );
-      setTimeout(() => {
-        setTargets((prevTargets) =>
-          prevTargets.map((target) => ({
-            ...target,
-            dx: (Math.random() - 0.5) * targetSpeed,
-            dy: (Math.random() - 0.5) * targetSpeed,
-          }))
-        );
-      }, 3000);
-    } else if (clickedPowerUp.type === 'double-points') {
-      setScore((prevScore) => prevScore + 10);
-    } else if (clickedPowerUp.type === 'skull') {
-      setLives((prevLives) => Math.max(prevLives - 1, 0));
-    } else if (clickedPowerUp.type === 'lightning') {
-      const pointsToAdd = targets.length;
-      setTargets([]);
-      setScore((prevScore) => prevScore + pointsToAdd);
-    } else if (clickedPowerUp.type === 'lava-shield') {
-      const halfLength = Math.ceil(targets.length / 2);
-      const pointsToAdd = halfLength;
-      setTargets((prevTargets) => prevTargets.slice(halfLength));
-      setScore((prevScore) => prevScore + pointsToAdd);
-      setLives((prevLives) => prevLives + 2);
-    }
-
-    // Then handle the removal with animation
     if (clickedPowerUp.type === 'lightning') {
-      setPowerUps((prevPowerUps) => prevPowerUps.map(pu => pu.id === id ? { ...pu, isRemoving: true } : pu));
+      setTargets([]);
+      setScore((prevScore) => prevScore + targets.length);
+      setPowerUps((prevPowerUps) => prevPowerUps.map(pu => pu.id === id ? { ...pu, isAnimating: true } : pu));
       setTimeout(() => {
         setPowerUps((prevPowerUps) => prevPowerUps.filter(pu => pu.id !== id));
       }, 500);
     } else {
+      // Handle other power-ups
       setPowerUps((prevPowerUps) => prevPowerUps.filter(pu => pu.id !== id));
     }
   };
@@ -175,7 +141,7 @@ const Game: React.FC = () => {
 
   const startGame = () => {
     setScore(0);
-    setLives(difficulty === 'easy' ? 5 : difficulty === 'normal' ? 3 : 1); // Set lives based on difficulty
+    setLives(difficulty === 'easy' ? 5 : difficulty === 'normal' ? 3 : 1);
     setGameOver(false);
     setTargets([]);
     setPowerUps([]);
@@ -190,7 +156,7 @@ const Game: React.FC = () => {
   const resetGame = () => {
     setGameStarted(false);
     setScore(0);
-    setLives(5); // Reset lives to 5
+    setLives(5);
     setGameOver(false);
     setTargets([]);
     setPowerUps([]);
@@ -289,7 +255,7 @@ const Game: React.FC = () => {
         {powerUps.map(powerUp => (
           <div
             key={powerUp.id}
-            className={`power-up power-up-${powerUp.type} ${powerUp.isRemoving ? 'fade-out' : ''}`}
+            className={`power-up power-up-${powerUp.type} ${powerUp.isAnimating && powerUp.type === 'lightning' ? 'active' : ''} ${powerUp.isRemoving ? 'fade-out' : ''}`}
             style={{
               left: powerUp.x,
               top: powerUp.y,
@@ -318,7 +284,7 @@ const Game: React.FC = () => {
 
       <div className="score-display">
         <div className="text-xl text-white">Score: {score}</div>
-        <div className="text-xl text-white">Lives: {lives}</div> {/* Correctly displays lives */}
+        <div className="text-xl text-white">Lives: {lives}</div>
         <div className="text-xl text-white">Combo: x{combo}</div>
       </div>
 
