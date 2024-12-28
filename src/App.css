@@ -45,17 +45,6 @@ h2 {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
 }
 
-/* Targets */
-.target {
-  position: absolute;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: transform 0.1s;
-  animation: pulse 2s infinite;
-}
-
 /* Power-ups */
 .power-up {
   position: absolute;
@@ -203,34 +192,6 @@ h2 {
 .difficulty-button:hover {
   background-color: #eab308;
   color: #1f2937;
-}
-
-/* Lightning Effect */
-.lightning-effect {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1000;
-}
-
-.lightning-bolt {
-  display: inline-block;
-  font-size: 24px;
-  color: #fff;
-  position: absolute;
-  animation: lightningMove 1s infinite linear;
-}
-
-.lightning-bolt:nth-child(1) { top: 20%; left: 30%; }
-.lightning-bolt:nth-child(2) { top: 50%; left: 70%; }
-.lightning-bolt:nth-child(3) { top: 80%; left: 40%; }
-
-@keyframes lightningMove {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(100%); }
 }
 
 /* Responsive Design */
