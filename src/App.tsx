@@ -34,6 +34,7 @@ const Game: React.FC = () => {
   const [combo, setCombo] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [difficulty, setDifficulty] = useState<'easy' | 'normal' | 'hard'>('normal');
+  const [isLightningActive, setIsLightningActive] = useState<boolean>(false);
   const audioPlayerRef = useRef<any>(null);
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const targetSize: number = 30;
@@ -72,9 +73,11 @@ const Game: React.FC = () => {
       setTargets([]);
       setScore((prevScore) => prevScore + targets.length);
       setPowerUps((prevPowerUps) => prevPowerUps.map(pu => pu.id === id ? { ...pu, isAnimating: true } : pu));
+      setIsLightningActive(true);
       setTimeout(() => {
         setPowerUps((prevPowerUps) => prevPowerUps.filter(pu => pu.id !== id));
-      }, 500);
+        setIsLightningActive(false);
+      }, 1000); // Animation lasts for 1 second
     } else {
       // Handle other power-ups
       setPowerUps((prevPowerUps) => prevPowerUps.filter(pu => pu.id !== id));
@@ -280,6 +283,14 @@ const Game: React.FC = () => {
             top: mousePosition.y - 6,
           }}
         />
+
+        {isLightningActive && (
+          <div className="lightning-effect">
+            <span className="lightning-bolt"></span>
+            <span className="lightning-bolt"></span>
+            <span className="lightning-bolt"></span>
+          </div>
+        )}
       </div>
 
       <div className="score-display">
