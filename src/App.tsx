@@ -296,14 +296,14 @@ const Game: React.FC = () => {
           <ul>
             <li>Click on the moving targets to score points.</li>
             <li>If a target isn't clicked within 45 seconds, you lose a life.</li>
-            <li>If you miss the target, you lose a life</li>
+            <li>If you miss the target, you lose a life.</li>
             <li>Use power-ups to gain advantages or face penalties.</li>
           </ul>
           <h3>Power-Ups</h3>
           <ul>
             <li><strong>+ Extra Life</strong>: Gives Extra life</li>
             <li><strong>❄️ Freeze Power-up</strong>: Freezes targets for 3 seconds</li>
-            <li><strong>+10 +10 Power-up</strong>: Gain 10 points</li>
+            <li><strong>+10 Power-up</strong>: Gain 10 points</li>
             <li><strong>⚡️Lightning Power-up</strong>: Destroy all targets and gain points</li>
             <li><strong>🛡️Lava Shield Power-up</strong>: Destroy half the targets, gain points, and gain 2 lives</li>
             <li><strong>🧙‍♀️Witch Trap</strong>: Lose a life</li>
