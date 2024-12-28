@@ -52,7 +52,7 @@ const Game: React.FC = () => {
   const targetRotationSpeed: number = 2;
 
   const songs = [
-    { id: 1, name: 'Lo-Fi Chill Beats', src: 'https://streamingpulsar.net/lofi-radio' }, // Default song
+    { id: 1, name: 'Lo-Fi Chill Beats', src: 'https://soundcloud.com/oxinym/sets/lofi-beats-royalty-free' }, // SoundCloud playlist
     { id: 2, name: 'Song 1', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
     { id: 3, name: 'Song 2', src: 'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Chad_Crouch/Arps/Chad_Crouch_-_Algorithms.mp3' },
     { id: 4, name: 'Song 3', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3' },
@@ -442,15 +442,26 @@ const Game: React.FC = () => {
       )}
 
       <div className="hidden">
-        <AudioPlayer
-          ref={audioPlayerRef}
-          src={selectedSong.src}
-          autoPlay={false}
-          loop={true}
-          volume={0.5}
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
-        />
+        {selectedSong.id === 1 ? (
+          <iframe
+            width="100%"
+            height="166"
+            scrolling="no"
+            frameBorder="no"
+            allow="autoplay"
+            src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(selectedSong.src)}&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true`}
+          ></iframe>
+        ) : (
+          <AudioPlayer
+            ref={audioPlayerRef}
+            src={selectedSong.src}
+            autoPlay={false}
+            loop={true}
+            volume={0.5}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+          />
+        )}
       </div>
 
       <div
