@@ -42,7 +42,7 @@ const Game: React.FC = () => {
   const audioPlayerRef = useRef<any>(null);
   const soundCloudRef = useRef<HTMLIFrameElement>(null);
   const gameAreaRef = useRef<HTMLDivElement>(null);
-  const [soundCloudWidget, setSoundCloudWidget] = useState<any>(null);
+  const [soundCloudWidget, setSoundCloudWidget] = useState<any>(null); // Add this line
 
   const targetSize: number = 30;
   const gameWidth: number = 600;
@@ -102,6 +102,211 @@ const Game: React.FC = () => {
     }
   };
 
+  const getRandomColor = (): string => {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+  };
+
+  const spawnTarget = () => {
+    const x = Math.random() * (gameWidth - targetSize);
+    const y = Math.random() * (gameHeight - targetSize);
+    const dx = (Math.random() - 0.5) * targetSpeed;
+    const dy = (Math.random() - 0.5) * targetSpeed;
+    const color = getRandomColor();
+    let type: 'normal' | 'slime' | 'mini' = 'normal';
+    const random = Math.random();
+    if (random < 0.1) {
+      type = 'slime';
+    } else if (random < 0.2) {
+      type = 'mini';
+    }
+    let size: number;
+    switch (type) {
+      case 'slime':
+        size = targetSize * 1.2;
+        break;
+      case 'mini':
+        size = targetSize / 2;
+        break;
+      case 'normal':
+        size = targetSize;
+        break;
+      default:
+        size = targetSize;
+        break;
+    }
+    const newTarget: Target = {
+      x,
+      y,
+      dx,
+      dy,
+      id: Date.now() + Math.random(),
+      color,
+      rotation: 0,
+      spawnTime: Date.now(),
+      type,
+      size,
+    };
+    setTargets((prevTargets) => [...prevTargets, newTarget]);
+  };
+
+  const handleTargetClick = (id: number) => {
+    if (gameOver) return;
+    setTargets((prevTargets) => {
+      const updatedTargets = prevTargets.filter((target) => target.id !== id);
+      const clickedTarget = prevTargets.find((target) => target.id === id);
+      if (clickedTarget) {
+        switch (clickedTarget.type) {
+          case 'slime':
+            // Split into two mini targets
+            const newMiniTarget1: Target = {
+              x: clickedTarget.x,
+              y: clickedTarget.y,
+              dx: (Math.random() - 0.5) * targetSpeed,
+              dy: (Math.random() - 0.5) * targetSpeed,
+              id: Date.now() + Math.random(),
+              color: getRandomColor(),
+              rotation: 0,
+              spawnTime: Date.now(),
+              type: 'mini',
+              size: targetSize / 2,
+            };
+            const newMiniTarget2: Target = {
+              x: clickedTarget.x,
+              y: clickedTarget.y,
+              dx: (Math.random() - 0.5) * targetSpeed,
+              dy: (Math.random() - 0.5) * targetSpeed,
+              id: Date.now() + Math.random(),
+              color: getRandomColor(),
+              rotation: 0,
+              spawnTime: Date.now(),
+              type: 'mini',
+              size: targetSize / 2,
+            };
+            return [...updatedTargets, newMiniTarget1, newMiniTarget2];
+          case 'mini':
+            // Handle mini target click
+            return updatedTargets;
+          case 'normal':
+            // Handle normal target click
+            return updatedTargets;
+          default:
+            // This should never happen
+            return updatedTargets;
+        }
+      }
+      return updatedTargets;
+    });
+    setScore((prevScore) => prevScore + (combo > 5 ? 2 : 1));
+    setCombo((prevCombo) => prevCombo + 1);
+  };
+
+  const handlePowerUpClick = (id: number) => {
+    if (gameOver) return;
+    const clickedPowerUp = powerUps.find((pu) => pu.id === id);
+    if (!clickedPowerUp) return;
+    setPowerUps((prevPowerUps) => prevPowerUps.filter((powerUp) => powerUp.id !== id));
+
+    switch (clickedPowerUp.type) {
+      case 'extra-life':
+        setLives((prevLives) => prevLives + 1);
+        break;
+      case 'time-freeze':
+        setCombo(0);
+        setTargets((prevTargets) =>
+          prevTargets.map((target) => ({
+            ...target,
+            dx: 0,
+            dy: 0,
+          }))
+        );
+        setTimeout(() => {
+          setTargets((prevTargets) =>
+            prevTargets.map((target) => ({
+              ...target,
+              dx: (Math.random() - 0.5) * targetSpeed,
+              dy: (Math.random() - 0.5) * targetSpeed,
+            }))
+          );
+        }, 3000);
+        break;
+      case 'double-points':
+        setScore((prevScore) => prevScore + 10);
+        break;
+      case 'skull':
+        setLives((prevLives) => Math.max(prevLives - 1, 0));
+        if (lives <= 1) {
+          setGameOver(true);
+          setGameStarted(false);
+          stopMusic();
+        }
+        break;
+      case 'lightning':
+        const pointsToAddLightning = targets.length;
+        setTargets([]);
+        setScore((prevScore) => prevScore + pointsToAddLightning);
+        break;
+      case 'lava-shield':
+        const halfLength = Math.ceil(targets.length / 2);
+        const pointsToAddLavaShield = halfLength;
+        setTargets((prevTargets) => prevTargets.slice(halfLength));
+        setScore((prevScore) => prevScore + pointsToAddLavaShield);
+        setLives((prevLives) => prevLives + 2);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const spawnPowerUp = () => {
+    const x = Math.random() * (gameWidth - targetSize);
+    const y = Math.random() * (gameHeight - targetSize);
+    const dx = (Math.random() - 0.5) * targetSpeed;
+    const dy = (Math.random() - 0.5) * targetSpeed;
+    const powerUpTypes: PowerUpType[] = ['extra-life', 'time-freeze', 'double-points', 'skull', 'lightning', 'lava-shield'];
+    const type: PowerUpType = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
+    const newPowerUp: PowerUp = {
+      x,
+      y,
+      dx,
+      dy,
+      id: Date.now() + Math.random(),
+      type,
+      spawnTime: Date.now(),
+    };
+    setPowerUps((prevPowerUps) => [...prevPowerUps, newPowerUp]);
+
+    setTimeout(() => {
+      setPowerUps((prevPowerUps) => prevPowerUps.filter((powerUp) => powerUp.id !== newPowerUp.id));
+    }, powerUpDuration);
+  };
+
+  const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
+    if (!gameAreaRef.current) return;
+    const rect = gameAreaRef.current.getBoundingClientRect();
+    setMousePosition({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  };
+
+  const handleGameAreaClick = () => {
+    if (gameOver) return;
+    setLives((prevLives) => {
+      const newLives = prevLives - 1;
+      if (newLives <= 0) {
+        setGameOver(true);
+        setGameStarted(false);
+        stopMusic();
+      }
+      return newLives;
+    });
+  };
+
   const startMusic = () => {
     if (selectedSong.id === 1) {
       if (soundCloudRef.current) {
@@ -150,7 +355,105 @@ const Game: React.FC = () => {
     stopMusic();
   };
 
-  // ... (rest of the game logic remains the same)
+  useEffect(() => {
+    if (gameStarted && !gameOver) {
+      const movementInterval = setInterval(() => {
+        setTargets((prevTargets) => {
+          const updatedTargets = prevTargets.map((target) => {
+            let { x, y, dx, dy } = target;
+
+            // Update position
+            x += dx;
+            y += dy;
+
+            // Bounce off walls
+            if (x < 0 || x > gameWidth - target.size) {
+              dx = -dx;
+              x = x < 0 ? 0 : gameWidth - target.size;
+            }
+            if (y < 0 || y > gameHeight - target.size) {
+              dy = -dy;
+              y = y < 0 ? 0 : gameHeight - target.size;
+            }
+
+            return {
+              ...target,
+              x,
+              y,
+              dx,
+              dy,
+              rotation: (target.rotation + targetRotationSpeed) % 360,
+            };
+          });
+
+          // Check for expired targets (45 seconds)
+          const expiredTargets = updatedTargets.filter(
+            (target) => Date.now() - target.spawnTime > 45000
+          );
+          if (expiredTargets.length > 0) {
+            setLives((prevLives) => {
+              const newLives = prevLives - expiredTargets.length;
+              if (newLives <= 0) {
+                setGameOver(true);
+                setGameStarted(false);
+                stopMusic();
+              }
+              return Math.max(newLives, 0);
+            });
+          }
+
+          const filteredTargets = updatedTargets.filter(
+            (target) => Date.now() - target.spawnTime <= 45000
+          );
+
+          return filteredTargets;
+        });
+
+        // Add movement for power-ups
+        setPowerUps((prevPowerUps) => {
+          const updatedPowerUps = prevPowerUps.map((powerUp) => {
+            let { x, y, dx, dy } = powerUp;
+
+            // Update position
+            x += dx;
+            y += dy;
+
+            // Bounce off walls for power-ups
+            if (x < 0 || x > gameWidth - targetSize) {
+              dx = -dx;
+              x = x < 0 ? 0 : gameWidth - targetSize;
+            }
+            if (y < 0 || y > gameHeight - targetSize) {
+              dy = -dy;
+              y = y < 0 ? 0 : gameHeight - targetSize;
+            }
+
+            return { ...powerUp, x, y };
+          });
+
+          const filteredPowerUps = updatedPowerUps.filter(
+            (powerUp) => Date.now() - powerUp.spawnTime <= powerUpDuration
+          );
+
+          return filteredPowerUps;
+        });
+      }, 20);
+
+      const spawnIntervalId = setInterval(() => {
+        if (!gameOver) spawnTarget();
+      }, targetSpawnInterval);
+
+      const powerUpIntervalId = setInterval(() => {
+        if (!gameOver) spawnPowerUp();
+      }, powerUpSpawnInterval);
+
+      return () => {
+        clearInterval(movementInterval);
+        clearInterval(spawnIntervalId);
+        clearInterval(powerUpIntervalId);
+      };
+    }
+  }, [gameStarted, gameOver]);
 
   return (
     <div className="flex-container">
