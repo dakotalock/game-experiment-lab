@@ -266,3 +266,49 @@ h2 {
   outline: none;
   border-color: #eab308;
 }
+
+/* Instructions Button */
+.instructions-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: #eab308;
+  color: #111827;
+  font-weight: bold;
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.instructions-button:hover {
+  background-color: #ca8a04;
+}
+
+/* Styles for .close-instructions-button */
+.close-instructions-button {
+  background-color: #eab308;
+  color: #111827;
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.close-instructions-button:hover {
+  background-color: #ca8a04;
+}
+
+@media (max-width: 768px) {
+  .instructions-button {
+    padding: 0.5rem 1rem;
+  }
+  
+  .close-instructions-button {
+    padding: 0.5rem 1rem;
+  }
+}
