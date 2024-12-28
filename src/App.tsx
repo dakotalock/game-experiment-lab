@@ -295,7 +295,7 @@ const Game: React.FC = () => {
           <h3>How to Play</h3>
           <ul>
             <li>Click on the moving targets to score points.</li>
-            <li>If a target isn't clicked with 45 seconds, you lose a life.</li>
+            <li>If a target isn't clicked within 45 seconds, you lose a life.</li>
             <li>If you miss the target, you lose a life</li>
             <li>Use power-ups to gain advantages or face penalties.</li>
           </ul>
