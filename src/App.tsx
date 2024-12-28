@@ -222,9 +222,9 @@ const Game: React.FC = () => {
             rotation: (target.rotation + targetRotationSpeed) % 360,
           }));
 
-          // Check for expired targets (25 seconds)
+          // Check for expired targets (45 seconds)
           const expiredTargets = updatedTargets.filter(
-            (target) => Date.now() - target.spawnTime > 25000
+            (target) => Date.now() - target.spawnTime > 45000
           );
           if (expiredTargets.length > 0) {
             setLives((prevLives) => Math.max(prevLives - expiredTargets.length, 0));
@@ -236,7 +236,7 @@ const Game: React.FC = () => {
               target.x < gameWidth &&
               target.y > -targetSize &&
               target.y < gameHeight &&
-              Date.now() - target.spawnTime <= 25000 // Keep only non-expired targets
+              Date.now() - target.spawnTime <= 45000 // Keep only non-expired targets
           );
 
           return filteredTargets;
