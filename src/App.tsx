@@ -45,13 +45,13 @@ const Game: React.FC = () => {
 
   const targetRotationSpeed: number = 2;
 
-  // Define the songs array with real, directly usable URLs
+  // Updated songs array with reliable and tested URLs
   const songs = [
     { id: 1, name: 'Song 1', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
     { id: 2, name: 'Song 2', src: 'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Chad_Crouch/Arps/Chad_Crouch_-_Algorithms.mp3' },
-    { id: 3, name: 'Song 3', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' }, // New Song 3
-    { id: 4, name: 'Song 4', src: 'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Chad_Crouch/Arps/Chad_Crouch_-_Drifting.mp3' }, // New Song 4
-    { id: 5, name: 'Song 5', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3' }, // New Song 5
+    { id: 3, name: 'Song 3', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3' }, // Better Song 3
+    { id: 4, name: 'Song 4', src: 'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Chad_Crouch/Arps/Chad_Crouch_-_Cloud_Line.mp3' }, // Updated Song 4
+    { id: 5, name: 'Song 5', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3' }, // Updated Song 5
   ];
 
   const [selectedSong, setSelectedSong] = useState(songs[0]);
