@@ -77,38 +77,41 @@ const Game: React.FC = () => {
     const dy = (Math.random() - 0.5) * targetSpeed;
     const color = getRandomColor();
     let type: 'normal' | 'slime' | 'mini' = 'normal';
-    if (Math.random() < 0.1) {
-      type = 'slime';
+    const random = Math.random();
+    if (random < 0.1) {
+        type = 'slime';
+    } else if (random < 0.2) {
+        type = 'mini';
     }
     let size: number;
     switch (type) {
-      case 'slime':
-        size = targetSize * 1.2;
-        break;
-      case 'mini':
-        size = targetSize / 2;
-        break;
-      case 'normal':
-        size = targetSize;
-        break;
-      default:
-        size = targetSize;
-        break;
+        case 'slime':
+            size = targetSize * 1.2;
+            break;
+        case 'mini':
+            size = targetSize / 2;
+            break;
+        case 'normal':
+            size = targetSize;
+            break;
+        default:
+            size = targetSize;
+            break;
     }
     const newTarget: Target = {
-      x,
-      y,
-      dx,
-      dy,
-      id: Date.now() + Math.random(),
-      color,
-      rotation: 0,
-      spawnTime: Date.now(),
-      type,
-      size,
+        x,
+        y,
+        dx,
+        dy,
+        id: Date.now() + Math.random(),
+        color,
+        rotation: 0,
+        spawnTime: Date.now(),
+        type,
+        size,
     };
     setTargets((prevTargets) => [...prevTargets, newTarget]);
-  };
+};
 
   const handleTargetClick = (id: number) => {
     if (gameOver) return;
