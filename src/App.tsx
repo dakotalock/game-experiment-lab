@@ -52,18 +52,44 @@ const Game: React.FC = () => {
   const targetRotationSpeed: number = 2;
 
   const songs = [
-  { id: 1, name: 'Song 1', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-  { id: 2, name: 'Song 2', src: 'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Chad_Crouch/Arps/Chad_Crouch_-_Algorithms.mp3' },
-  { id: 3, name: 'Song 3', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3' },
-  { id: 4, name: 'Song 4', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
-  { id: 5, name: 'Song 5', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3' },
-  { id: 6, name: 'Lo-Fi Chill Beats', src: 'https://streamingpulsar.net/lofi-radio' }, // Royalty-free Lo-Fi stream
+  { id: 1, name: 'Lo-Fi Chill Beats', src: 'https://streamingpulsar.net/lofi-radio' }, // Default song
+  { id: 2, name: 'Song 1', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+  { id: 3, name: 'Song 2', src: 'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Chad_Crouch/Arps/Chad_Crouch_-_Algorithms.mp3' },
+  { id: 4, name: 'Song 3', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3' },
+  { id: 5, name: 'Song 4', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
+  { id: 6, name: 'Song 5', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3' },
 ];
 
-const [selectedSong, setSelectedSong] = useState(songs[5]); // Default to Lo-Fi Chill Beats
+export default function App() {
+  const [selectedSong, setSelectedSong] = useState(songs[0]); // Default to first song in the list
 
+  const handleSongChange = (id: number) => {
+    const song = songs.find((song) => song.id === id);
+    if (song) {
+      setSelectedSong(song);
+    }
+  };
 
-  const [selectedSong, setSelectedSong] = useState(songs[0]);
+  return (
+    <div>
+      <h1>Music Player</h1>
+      <audio controls autoPlay>
+        <source src={selectedSong.src} type="audio/mpeg" />
+        Your browser does not support the audio element.
+      </audio>
+      <div>
+        <h2>Select a Song</h2>
+        <ul>
+          {songs.map((song) => (
+            <li key={song.id}>
+              <button onClick={() => handleSongChange(song.id)}>{song.name}</button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
 
   const getRandomColor = (): string => {
     const letters = '0123456789ABCDEF';
