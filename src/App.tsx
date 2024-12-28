@@ -75,6 +75,14 @@ const Game: React.FC = () => {
     };
   }, []);
 
+  // Handle song change
+  useEffect(() => {
+    if (gameStarted) {
+      stopMusic(); // Stop the current player
+      startMusic(); // Start the new player
+    }
+  }, [selectedSong]);
+
   const handleSongChange = (id: number) => {
     const song = songs.find((song) => song.id === id);
     if (song) {
