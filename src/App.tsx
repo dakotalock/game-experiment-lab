@@ -12,7 +12,7 @@ interface Target {
   color: string;
   rotation: number;
   spawnTime: number;
-  type: 'normal' | 'slime' | 'mini';
+  type: 'normal' | 'slime' | 'mini'; // Updated to include 'mini'
   size: number;
 }
 
@@ -42,8 +42,6 @@ const Game: React.FC = () => {
   const audioPlayerRef = useRef<any>(null);
   const soundCloudRef = useRef<HTMLIFrameElement>(null);
   const gameAreaRef = useRef<HTMLDivElement>(null);
-  const [soundCloudWidget, setSoundCloudWidget] = useState<any>(null); // Add this line
-
   const targetSize: number = 30;
   const gameWidth: number = 600;
   const gameHeight: number = 400;
@@ -55,7 +53,7 @@ const Game: React.FC = () => {
   const targetRotationSpeed: number = 2;
 
   const songs = [
-    { id: 1, name: 'Lo-Fi Chill Beats', src: 'https://soundcloud.com/oxinym/sets/lofi-beats-royalty-free' },
+    { id: 1, name: 'Lo-Fi Chill Beats', src: 'https://soundcloud.com/oxinym/sets/lofi-beats-royalty-free' }, // SoundCloud playlist
     { id: 2, name: 'Song 1', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
     { id: 3, name: 'Song 2', src: 'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Chad_Crouch/Arps/Chad_Crouch_-_Algorithms.mp3' },
     { id: 4, name: 'Song 3', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3' },
@@ -63,21 +61,13 @@ const Game: React.FC = () => {
     { id: 6, name: 'Song 5', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3' },
   ];
 
-  const [selectedSong, setSelectedSong] = useState(songs[0]);
+  const [selectedSong, setSelectedSong] = useState(songs[0]); // Default to first song in the list
 
-  // Load SoundCloud SDK and initialize widget
+  // Load SoundCloud SDK
   useEffect(() => {
     const script = document.createElement('script');
     script.src = 'https://w.soundcloud.com/player/api.js';
     script.async = true;
-
-    script.onload = () => {
-      if (soundCloudRef.current) {
-        const widget = (window as any).SC.Widget(soundCloudRef.current);
-        setSoundCloudWidget(widget);
-      }
-    };
-
     document.body.appendChild(script);
 
     return () => {
@@ -88,10 +78,8 @@ const Game: React.FC = () => {
   // Handle song change
   useEffect(() => {
     if (gameStarted) {
-      stopMusic();
-      setTimeout(() => {
-        startMusic();
-      }, 100);
+      stopMusic(); // Stop the current player
+      startMusic(); // Start the new player
     }
   }, [selectedSong]);
 
@@ -308,26 +296,18 @@ const Game: React.FC = () => {
   };
 
   const startMusic = () => {
-    if (selectedSong.id === 1) {
-      if (soundCloudRef.current) {
-        const widget = (window as any).SC.Widget(soundCloudRef.current);
-        setSoundCloudWidget(widget);
-        setTimeout(() => {
-          widget.load(selectedSong.src, {
-            auto_play: true,
-          });
-        }, 100);
-      }
+    if (selectedSong.id === 1 && soundCloudRef.current) {
+      const widget = (window as any).SC.Widget(soundCloudRef.current);
+      widget.play();
     } else if (audioPlayerRef.current) {
       audioPlayerRef.current.audio.current.play();
     }
   };
 
   const stopMusic = () => {
-    if (selectedSong.id === 1) {
-      if (soundCloudWidget) {
-        soundCloudWidget.pause();
-      }
+    if (selectedSong.id === 1 && soundCloudRef.current) {
+      const widget = (window as any).SC.Widget(soundCloudRef.current);
+      widget.pause();
     } else if (audioPlayerRef.current) {
       audioPlayerRef.current.audio.current.pause();
     }
@@ -494,9 +474,9 @@ const Game: React.FC = () => {
       )}
 
       <div className="hidden">
-        {selectedSong.id === 1 && (
+        {selectedSong.id === 1 ? (
           <iframe
-            key={`soundcloud-${Date.now()}`} // Force iframe refresh on every render
+            key={selectedSong.src} // Force re-render by changing the key
             ref={soundCloudRef}
             width="0"
             height="0"
@@ -505,8 +485,7 @@ const Game: React.FC = () => {
             allow="autoplay"
             src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(selectedSong.src)}&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true`}
           ></iframe>
-        )}
-        {selectedSong.id !== 1 && (
+        ) : (
           <AudioPlayer
             ref={audioPlayerRef}
             src={selectedSong.src}
