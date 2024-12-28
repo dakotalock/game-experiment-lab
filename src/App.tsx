@@ -81,40 +81,54 @@ const Game: React.FC = () => {
     if (!clickedPowerUp) return;
     setPowerUps((prevPowerUps) => prevPowerUps.filter((powerUp) => powerUp.id !== id));
 
-    if (clickedPowerUp.type === 'extra-life') {
-      setLives((prevLives) => prevLives + 1);
-    } else if (clickedPowerUp.type === 'time-freeze') {
-      setCombo(0);
-      setTargets((prevTargets) =>
-        prevTargets.map((target) => ({
-          ...target,
-          dx: 0,
-          dy: 0,
-        }))
-      );
-      setTimeout(() => {
+    switch (clickedPowerUp.type) {
+      case 'extra-life':
+        setLives((prevLives) => prevLives + 1);
+        break;
+      case 'time-freeze':
+        setCombo(0);
         setTargets((prevTargets) =>
           prevTargets.map((target) => ({
             ...target,
-            dx: (Math.random() - 0.5) * targetSpeed,
-            dy: (Math.random() - 0.5) * targetSpeed,
+            dx: 0,
+            dy: 0,
           }))
         );
-      }, 3000);
-    } else if (clickedPowerUp.type === 'double-points') {
-      setScore((prevScore) => prevScore + 10);
-    } else if (clickedPowerUp.type === 'skull') {
-      setLives((prevLives) => Math.max(prevLives - 1, 0));
-    } else if (clickedPowerUp.type === 'lightning') {
-      const pointsToAdd = targets.length;
-      setTargets([]);
-      setScore((prevScore) => prevScore + pointsToAdd);
-    } else if (clickedPowerUp.type === 'lava-shield') {
-      const halfLength = Math.ceil(targets.length / 2);
-      const pointsToAdd = halfLength;
-      setTargets((prevTargets) => prevTargets.slice(halfLength));
-      setScore((prevScore) => prevScore + pointsToAdd);
-      setLives((prevLives) => prevLives + 2);
+        setTimeout(() => {
+          setTargets((prevTargets) =>
+            prevTargets.map((target) => ({
+              ...target,
+              dx: (Math.random() - 0.5) * targetSpeed,
+              dy: (Math.random() - 0.5) * targetSpeed,
+            }))
+          );
+        }, 3000);
+        break;
+      case 'double-points':
+        setScore((prevScore) => prevScore + 10);
+        break;
+      case 'skull':
+        setLives((prevLives) => Math.max(prevLives - 1, 0));
+        if (lives <= 1) {
+          setGameOver(true);
+          setGameStarted(false);
+          audioPlayerRef.current?.audio.current?.pause();
+        }
+        break;
+      case 'lightning':
+        const pointsToAdd = targets.length;
+        setTargets([]);
+        setScore((prevScore) => prevScore + pointsToAdd);
+        break;
+      case 'lava-shield':
+        const halfLength = Math.ceil(targets.length / 2);
+        const pointsToAdd = halfLength;
+        setTargets((prevTargets) => prevTargets.slice(halfLength));
+        setScore((prevScore) => prevScore + pointsToAdd);
+        setLives((prevLives) => prevLives + 2);
+        break;
+      default:
+        break;
     }
   };
 
@@ -247,7 +261,15 @@ const Game: React.FC = () => {
             (target) => Date.now() - target.spawnTime > 45000
           );
           if (expiredTargets.length > 0) {
-            setLives((prevLives) => Math.max(prevLives - expiredTargets.length, 0));
+            setLives((prevLives) => {
+              const newLives = prevLives - expiredTargets.length;
+              if (newLives <= 0) {
+                setGameOver(true);
+                setGameStarted(false);
+                audioPlayerRef.current?.audio.current?.pause();
+              }
+              return Math.max(newLives, 0);
+            });
           }
 
           const filteredTargets = updatedTargets.filter(
@@ -397,7 +419,7 @@ const Game: React.FC = () => {
             {powerUp.type === 'extra-life' ? '+' :
              powerUp.type === 'time-freeze' ? '❄️' :
              powerUp.type === 'double-points' ? '+10' :
-             powerUp.type === 'skull' ? '髑髅' :
+             powerUp.type === 'skull' ? '🧙‍♀️' :
              powerUp.type === 'lightning' ? '⚡️' : '🛡️'}
           </div>
         ))}
