@@ -52,15 +52,14 @@ const Game: React.FC = () => {
   const targetRotationSpeed: number = 2;
 
   const songs = [
-  { id: 1, name: 'Lo-Fi Chill Beats', src: 'https://streamingpulsar.net/lofi-radio' }, // Default song
-  { id: 2, name: 'Song 1', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-  { id: 3, name: 'Song 2', src: 'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Chad_Crouch/Arps/Chad_Crouch_-_Algorithms.mp3' },
-  { id: 4, name: 'Song 3', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3' },
-  { id: 5, name: 'Song 4', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
-  { id: 6, name: 'Song 5', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3' },
-];
+    { id: 1, name: 'Lo-Fi Chill Beats', src: 'https://streamingpulsar.net/lofi-radio' }, // Default song
+    { id: 2, name: 'Song 1', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+    { id: 3, name: 'Song 2', src: 'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Chad_Crouch/Arps/Chad_Crouch_-_Algorithms.mp3' },
+    { id: 4, name: 'Song 3', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3' },
+    { id: 5, name: 'Song 4', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
+    { id: 6, name: 'Song 5', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3' },
+  ];
 
-export default function App() {
   const [selectedSong, setSelectedSong] = useState(songs[0]); // Default to first song in the list
 
   const handleSongChange = (id: number) => {
@@ -69,27 +68,6 @@ export default function App() {
       setSelectedSong(song);
     }
   };
-
-  return (
-    <div>
-      <h1>Music Player</h1>
-      <audio controls autoPlay>
-        <source src={selectedSong.src} type="audio/mpeg" />
-        Your browser does not support the audio element.
-      </audio>
-      <div>
-        <h2>Select a Song</h2>
-        <ul>
-          {songs.map((song) => (
-            <li key={song.id}>
-              <button onClick={() => handleSongChange(song.id)}>{song.name}</button>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  );
-}
 
   const getRandomColor = (): string => {
     const letters = '0123456789ABCDEF';
@@ -109,39 +87,39 @@ export default function App() {
     let type: 'normal' | 'slime' | 'mini' = 'normal';
     const random = Math.random();
     if (random < 0.1) {
-        type = 'slime';
+      type = 'slime';
     } else if (random < 0.2) {
-        type = 'mini';
+      type = 'mini';
     }
     let size: number;
     switch (type) {
-        case 'slime':
-            size = targetSize * 1.2;
-            break;
-        case 'mini':
-            size = targetSize / 2;
-            break;
-        case 'normal':
-            size = targetSize;
-            break;
-        default:
-            size = targetSize;
-            break;
+      case 'slime':
+        size = targetSize * 1.2;
+        break;
+      case 'mini':
+        size = targetSize / 2;
+        break;
+      case 'normal':
+        size = targetSize;
+        break;
+      default:
+        size = targetSize;
+        break;
     }
     const newTarget: Target = {
-        x,
-        y,
-        dx,
-        dy,
-        id: Date.now() + Math.random(),
-        color,
-        rotation: 0,
-        spawnTime: Date.now(),
-        type,
-        size,
+      x,
+      y,
+      dx,
+      dy,
+      id: Date.now() + Math.random(),
+      color,
+      rotation: 0,
+      spawnTime: Date.now(),
+      type,
+      size,
     };
     setTargets((prevTargets) => [...prevTargets, newTarget]);
-};
+  };
 
   const handleTargetClick = (id: number) => {
     if (gameOver) return;
