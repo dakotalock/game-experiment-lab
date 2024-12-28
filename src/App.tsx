@@ -20,6 +20,7 @@ interface PowerUp {
   y: number;
   id: number;
   type: PowerUpType;
+  isRemoving?: boolean;
 }
 
 const Game: React.FC = () => {
@@ -65,8 +66,8 @@ const Game: React.FC = () => {
     if (gameOver) return;
     const clickedPowerUp = powerUps.find((pu) => pu.id === id);
     if (!clickedPowerUp) return;
-    setPowerUps((prevPowerUps) => prevPowerUps.filter((powerUp) => powerUp.id !== id));
 
+    // Handle power-up effects first
     if (clickedPowerUp.type === 'extra-life') {
       setLives((prevLives) => prevLives + 1);
     } else if (clickedPowerUp.type === 'time-freeze') {
@@ -101,6 +102,16 @@ const Game: React.FC = () => {
       setTargets((prevTargets) => prevTargets.slice(halfLength));
       setScore((prevScore) => prevScore + pointsToAdd);
       setLives((prevLives) => prevLives + 2);
+    }
+
+    // Then handle the removal with animation
+    if (clickedPowerUp.type === 'lightning') {
+      setPowerUps((prevPowerUps) => prevPowerUps.map(pu => pu.id === id ? { ...pu, isRemoving: true } : pu));
+      setTimeout(() => {
+        setPowerUps((prevPowerUps) => prevPowerUps.filter(pu => pu.id !== id));
+      }, 500);
+    } else {
+      setPowerUps((prevPowerUps) => prevPowerUps.filter(pu => pu.id !== id));
     }
   };
 
@@ -275,10 +286,10 @@ const Game: React.FC = () => {
           />
         ))}
 
-        {powerUps.map((powerUp) => (
+        {powerUps.map(powerUp => (
           <div
             key={powerUp.id}
-            className={`power-up power-up-${powerUp.type}`}
+            className={`power-up power-up-${powerUp.type} ${powerUp.isRemoving ? 'fade-out' : ''}`}
             style={{
               left: powerUp.x,
               top: powerUp.y,
