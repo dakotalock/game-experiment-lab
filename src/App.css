@@ -165,6 +165,17 @@ h2 {
   }
 }
 
+@keyframes lightningFlash {
+  0%, 50%, 100% { background-position: 0 0; }
+  25% { background-position: 20px 0; }
+  75% { background-position: -20px 0; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
 /* Power-up Colors */
 .power-up-extra-life { background-color: #eab308; box-shadow: 0 0 10px #eab308; }
 .power-up-time-freeze { background-color: #3b82f6; box-shadow: 0 0 10px #3b82f6; }
@@ -172,6 +183,16 @@ h2 {
 .power-up-skull { background-color: #6b7280; box-shadow: 0 0 10px #6b7280; }
 .power-up-lightning { background-color: #8b5cf6; box-shadow: 0 0 10px #8b5cf6; }
 .power-up-lava-shield { background-color: #f97316; box-shadow: 0 0 10px #f97316; }
+
+/* Power-up Animations */
+.power-up-lightning.active {
+  background: linear-gradient(90deg, #8b5cf6, #6366f1);
+  animation: lightningFlash 500ms infinite;
+}
+
+.power-up.fade-out {
+  animation: fadeOut 500ms forwards;
+}
 
 /* Difficulty Buttons */
 .difficulty-button {
