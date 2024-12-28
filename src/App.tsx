@@ -11,6 +11,7 @@ interface Target {
   id: number;
   color: string;
   rotation: number;
+  spawnTime: number; // Added for despawn logic
 }
 
 type PowerUpType = 'extra-life' | 'time-freeze' | 'double-points' | 'skull' | 'lightning' | 'lava-shield';
@@ -18,6 +19,8 @@ type PowerUpType = 'extra-life' | 'time-freeze' | 'double-points' | 'skull' | 'l
 interface PowerUp {
   x: number;
   y: number;
+  dx: number;
+  dy: number;
   id: number;
   type: PowerUpType;
 }
@@ -32,6 +35,7 @@ const Game: React.FC = () => {
   const [combo, setCombo] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [difficulty, setDifficulty] = useState<'easy' | 'normal' | 'hard'>('normal');
+  const [showInstructions, setShowInstructions] = useState<boolean>(false); // Added for instructions
   const audioPlayerRef = useRef<any>(null);
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const targetSize: number = 30;
@@ -47,12 +51,12 @@ const Game: React.FC = () => {
 
   // Updated songs array with reliable and tested URLs
   const songs = [
-  { id: 1, name: 'Song 1', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-  { id: 2, name: 'Song 2', src: 'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Chad_Crouch/Arps/Chad_Crouch_-_Algorithms.mp3' },
-  { id: 3, name: 'Song 3', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3' },
-  { id: 4, name: 'Song 4', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' }, // New Song 4 (SoundHelix)
-  { id: 5, name: 'Song 5', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3' },
-];
+    { id: 1, name: 'Song 1', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+    { id: 2, name: 'Song 2', src: 'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Chad_Crouch/Arps/Chad_Crouch_-_Algorithms.mp3' },
+    { id: 3, name: 'Song 3', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3' },
+    { id: 4, name: 'Song 4', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' }, // SoundHelix for reliability
+    { id: 5, name: 'Song 5', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3' },
+  ];
 
   const [selectedSong, setSelectedSong] = useState(songs[0]);
 
@@ -129,6 +133,7 @@ const Game: React.FC = () => {
       id: Date.now() + Math.random(),
       color,
       rotation: 0,
+      spawnTime: Date.now(), // Added for despawn logic
     };
     setTargets((prevTargets) => [...prevTargets, newTarget]);
   };
@@ -136,11 +141,15 @@ const Game: React.FC = () => {
   const spawnPowerUp = () => {
     const x = Math.random() * (gameWidth - targetSize);
     const y = Math.random() * (gameHeight - targetSize);
+    const dx = (Math.random() - 0.5) * targetSpeed; // Added movement
+    const dy = (Math.random() - 0.5) * targetSpeed; // Added movement
     const powerUpTypes: PowerUpType[] = ['extra-life', 'time-freeze', 'double-points', 'skull', 'lightning', 'lava-shield'];
     const type: PowerUpType = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
     const newPowerUp: PowerUp = {
       x,
       y,
+      dx,
+      dy,
       id: Date.now() + Math.random(),
       type,
     };
@@ -213,15 +222,43 @@ const Game: React.FC = () => {
             rotation: (target.rotation + targetRotationSpeed) % 360,
           }));
 
+          // Check for expired targets (25 seconds)
+          const expiredTargets = updatedTargets.filter(
+            (target) => Date.now() - target.spawnTime > 25000
+          );
+          if (expiredTargets.length > 0) {
+            setLives((prevLives) => Math.max(prevLives - expiredTargets.length, 0));
+          }
+
           const filteredTargets = updatedTargets.filter(
             (target) =>
               target.x > -targetSize &&
               target.x < gameWidth &&
               target.y > -targetSize &&
-              target.y < gameHeight
+              target.y < gameHeight &&
+              Date.now() - target.spawnTime <= 25000 // Keep only non-expired targets
           );
 
           return filteredTargets;
+        });
+
+        // Add movement for power-ups
+        setPowerUps((prevPowerUps) => {
+          const updatedPowerUps = prevPowerUps.map((powerUp) => ({
+            ...powerUp,
+            x: powerUp.x + powerUp.dx,
+            y: powerUp.y + powerUp.dy,
+          }));
+
+          const filteredPowerUps = updatedPowerUps.filter(
+            (powerUp) =>
+              powerUp.x > -targetSize &&
+              powerUp.x < gameWidth &&
+              powerUp.y > -targetSize &&
+              powerUp.y < gameHeight
+          );
+
+          return filteredPowerUps;
         });
       }, 20);
 
@@ -245,6 +282,39 @@ const Game: React.FC = () => {
     <div className="flex-container">
       <h1 className="text-5xl font-extrabold mb-8 text-white">Gabriel's Game</h1>
       <h2 className="text-xl text-gray-400 mt-4">Created by Dakota Lock for Gabriel</h2>
+
+      <button
+        className="instructions-button"
+        onClick={() => setShowInstructions(!showInstructions)}
+      >
+        Instructions
+      </button>
+
+      {showInstructions && (
+        <div className="instructions-modal">
+          <h3>How to Play</h3>
+          <ul>
+            <li>Click on the moving targets to score points.</li>
+            <li>If a target despawns without being clicked, you lose a life.</li>
+            <li>Use power-ups to gain advantages or face penalties.</li>
+          </ul>
+          <h3>Power-Ups</h3>
+          <ul>
+            <li><strong>+</strong>: Extra life</li>
+            <li><strong>❄️</strong>: Freeze targets for 3 seconds</li>
+            <li><strong>+10</strong>: Gain 10 points</li>
+            <li><strong>⚡️</strong>: Destroy all targets and gain points</li>
+            <li><strong>🛡️</strong>: Destroy half the targets, gain points, and gain 2 lives</li>
+            <li><strong>🧙‍♀️</strong>: Lose a life</li>
+          </ul>
+          <button
+            className="close-instructions-button"
+            onClick={() => setShowInstructions(false)}
+          >
+            Close
+          </button>
+        </div>
+      )}
 
       <div className="hidden">
         <AudioPlayer
