@@ -116,15 +116,15 @@ const Game: React.FC = () => {
         }
         break;
       case 'lightning':
-        const pointsToAdd = targets.length;
+        const pointsToAddLightning = targets.length;
         setTargets([]);
-        setScore((prevScore) => prevScore + pointsToAdd);
+        setScore((prevScore) => prevScore + pointsToAddLightning);
         break;
       case 'lava-shield':
         const halfLength = Math.ceil(targets.length / 2);
-        const pointsToAdd = halfLength;
+        const pointsToAddLavaShield = halfLength;
         setTargets((prevTargets) => prevTargets.slice(halfLength));
-        setScore((prevScore) => prevScore + pointsToAdd);
+        setScore((prevScore) => prevScore + pointsToAddLavaShield);
         setLives((prevLives) => prevLives + 2);
         break;
       default:
