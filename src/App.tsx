@@ -12,6 +12,8 @@ interface Target {
   color: string;
   rotation: number;
   spawnTime: number;
+  type: 'normal' | 'slime' | 'mini';
+  size: number;
 }
 
 type PowerUpType = 'extra-life' | 'time-freeze' | 'double-points' | 'skull' | 'lightning' | 'lava-shield';
@@ -70,7 +72,38 @@ const Game: React.FC = () => {
 
   const handleTargetClick = (id: number) => {
     if (gameOver) return;
-    setTargets((prevTargets) => prevTargets.filter((target) => target.id !== id));
+    setTargets((prevTargets) => {
+      const updatedTargets = prevTargets.filter((target) => target.id !== id);
+      const clickedTarget = prevTargets.find((target) => target.id === id);
+      if (clickedTarget && clickedTarget.type === 'slime') {
+        const newMiniTarget1: Target = {
+          x: clickedTarget.x,
+          y: clickedTarget.y,
+          dx: (Math.random() - 0.5) * targetSpeed,
+          dy: (Math.random() - 0.5) * targetSpeed,
+          id: Date.now() + Math.random(),
+          color: getRandomColor(),
+          rotation: 0,
+          spawnTime: Date.now(),
+          type: 'mini',
+          size: targetSize / 2,
+        };
+        const newMiniTarget2: Target = {
+          x: clickedTarget.x,
+          y: clickedTarget.y,
+          dx: (Math.random() - 0.5) * targetSpeed,
+          dy: (Math.random() - 0.5) * targetSpeed,
+          id: Date.now() + Math.random(),
+          color: getRandomColor(),
+          rotation: 0,
+          spawnTime: Date.now(),
+          type: 'mini',
+          size: targetSize / 2,
+        };
+        return [...updatedTargets, newMiniTarget1, newMiniTarget2];
+      }
+      return updatedTargets;
+    });
     setScore((prevScore) => prevScore + (combo > 5 ? 2 : 1));
     setCombo((prevCombo) => prevCombo + 1);
   };
@@ -138,6 +171,11 @@ const Game: React.FC = () => {
     const dx = (Math.random() - 0.5) * targetSpeed;
     const dy = (Math.random() - 0.5) * targetSpeed;
     const color = getRandomColor();
+    let type: 'normal' | 'slime' | 'mini' = 'normal';
+    if (Math.random() < 0.1) {
+      type = 'slime';
+    }
+    const size = type === 'slime' ? targetSize * 1.2 : type === 'mini' ? targetSize / 2 : targetSize;
     const newTarget: Target = {
       x,
       y,
@@ -147,6 +185,8 @@ const Game: React.FC = () => {
       color,
       rotation: 0,
       spawnTime: Date.now(),
+      type,
+      size,
     };
     setTargets((prevTargets) => [...prevTargets, newTarget]);
   };
@@ -237,13 +277,13 @@ const Game: React.FC = () => {
             y += dy;
 
             // Bounce off walls
-            if (x < 0 || x > gameWidth - targetSize) {
+            if (x < 0 || x > gameWidth - target.size) {
               dx = -dx;
-              x = x < 0 ? 0 : gameWidth - targetSize;
+              x = x < 0 ? 0 : gameWidth - target.size;
             }
-            if (y < 0 || y > gameHeight - targetSize) {
+            if (y < 0 || y > gameHeight - target.size) {
               dy = -dy;
-              y = y < 0 ? 0 : gameHeight - targetSize;
+              y = y < 0 ? 0 : gameHeight - target.size;
             }
 
             return {
@@ -390,9 +430,15 @@ const Game: React.FC = () => {
             key={target.id}
             className="target"
             style={{
+              position: 'absolute',
               left: target.x,
               top: target.y,
-              backgroundColor: target.color,
+              width: target.size,
+              height: target.size,
+              backgroundColor:
+                target.type === 'slime' ? '#66CCFF' : target.type === 'mini' ? '#FF66CC' : target.color,
+              borderRadius:
+                target.type === 'slime' ? '50%' : target.type === 'mini' ? '50%' : '10%',
               transform: `rotate(${target.rotation}deg)`,
               boxShadow: `0 0 10px ${target.color}`,
             }}
