@@ -24,7 +24,7 @@ interface PowerUp {
 
 const Game: React.FC = () => {
   const [score, setScore] = useState<number>(0);
-  const [lives, setLives] = useState<number>(0); // Changed to initialize to 0
+  const [lives, setLives] = useState<number>(0);
   const [gameOver, setGameOver] = useState<boolean>(false);
   const [gameStarted, setGameStarted] = useState<boolean>(false);
   const [targets, setTargets] = useState<Target[]>([]);
@@ -44,6 +44,17 @@ const Game: React.FC = () => {
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const targetRotationSpeed: number = 2;
+
+  // Define the songs array with real, directly usable URLs
+  const songs = [
+    { id: 1, name: 'SoundHelix Song 1', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+    { id: 2, name: 'Electronic Rock', src: 'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Chad_Crouch/Arps/Chad_Crouch_-_Algorithms.mp3' }, // Replaced with a cool alternative
+    { id: 3, name: 'Classical Canon', src: 'https://www.musopen.org/music/1234-canon-in-d/' },
+    { id: 4, name: 'Techno Beat', src: 'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Tours/Enthusiast/Tours_-_01_-_Enthusiast.mp3' },
+    { id: 5, name: 'Ambient Relax', src: 'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Chad_Crouch/Arps/Chad_Crouch_-_Drifting.mp3' },
+  ];
+
+  const [selectedSong, setSelectedSong] = useState(songs[0]);
 
   const getRandomColor = (): string => {
     const letters = '0123456789ABCDEF';
@@ -164,7 +175,7 @@ const Game: React.FC = () => {
 
   const startGame = () => {
     setScore(0);
-    setLives(difficulty === 'easy' ? 5 : difficulty === 'normal' ? 3 : 1); // Set lives based on difficulty
+    setLives(difficulty === 'easy' ? 5 : difficulty === 'normal' ? 3 : 1);
     setGameOver(false);
     setTargets([]);
     setPowerUps([]);
@@ -179,7 +190,7 @@ const Game: React.FC = () => {
   const resetGame = () => {
     setGameStarted(false);
     setScore(0);
-    setLives(5); // Reset lives to 5
+    setLives(5);
     setGameOver(false);
     setTargets([]);
     setPowerUps([]);
@@ -238,7 +249,7 @@ const Game: React.FC = () => {
       <div className="hidden">
         <AudioPlayer
           ref={audioPlayerRef}
-          src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+          src={selectedSong.src}
           autoPlay={false}
           loop={true}
           volume={0.5}
@@ -307,7 +318,7 @@ const Game: React.FC = () => {
 
       <div className="score-display">
         <div className="text-xl text-white">Score: {score}</div>
-        <div className="text-xl text-white">Lives: {lives}</div> {/* Correctly displays lives */}
+        <div className="text-xl text-white">Lives: {lives}</div>
         <div className="text-xl text-white">Combo: x{combo}</div>
       </div>
 
@@ -362,6 +373,19 @@ const Game: React.FC = () => {
           </div>
         )}
       </div>
+
+      <select
+        value={selectedSong.id}
+        onChange={(e) => {
+          const selectedId = parseInt(e.target.value);
+          setSelectedSong(songs.find(song => song.id === selectedId) || songs[0]);
+        }}
+        className="song-selector"
+      >
+        {songs.map(song => (
+          <option key={song.id} value={song.id}>{song.name}</option>
+        ))}
+      </select>
     </div>
   );
 };
