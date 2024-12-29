@@ -193,7 +193,7 @@ const Game: React.FC = () => {
     });
     setScore((prevScore) => prevScore + (combo > 5 ? 2 : 1));
     setCombo((prevCombo) => prevCombo + 1);
-    handleMouseClick(e);
+    triggerLaser(e);
   };
 
   const handlePowerUpClick = (id: number, e: MouseEvent<HTMLDivElement>) => {
@@ -251,7 +251,7 @@ const Game: React.FC = () => {
       default:
         break;
     }
-    handleMouseClick(e);
+    triggerLaser(e);
   };
 
   const spawnPowerUp = () => {
@@ -286,15 +286,11 @@ const Game: React.FC = () => {
     });
   };
 
-  const handleMouseClick = (e: MouseEvent<HTMLDivElement>) => {
-    if (gameOver) return;
-
+  const triggerLaser = (e: MouseEvent<HTMLDivElement>) => {
     if (!gameAreaRef.current) return;
     const rect = gameAreaRef.current.getBoundingClientRect();
-
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
-
     setLaser({
       startX: mousePosition.x,
       startY: mousePosition.y,
@@ -302,7 +298,6 @@ const Game: React.FC = () => {
       endY: clickY,
       timestamp: Date.now(),
     });
-
     setLives((prevLives) => {
       const newLives = prevLives - 1;
       if (newLives <= 0) {
@@ -332,45 +327,42 @@ const Game: React.FC = () => {
     return (
       <>
         <div
-          className="laser"
+          className="absolute pointer-events-none"
           style={{
-            position: 'absolute',
-            left: laser.startX,
-            top: laser.startY,
+            left: `${laser.startX}px`,
+            top: `${laser.startY}px`,
             transform: `rotate(${angle}rad)`,
             transformOrigin: '0% 50%',
             width: `${length}px`,
             height: '3px',
             background: 'linear-gradient(90deg, rgba(255,0,0,1) 0%, rgba(255,107,107,0.8) 100%)',
             boxShadow: '0 0 10px #ff0000, 0 0 20px #ff6b6b',
-            opacity,
+            opacity: opacity,
             transition: 'opacity 0.1s ease-out',
             zIndex: 1000,
           }}
         />
         <div
-          className="impact"
+          className="absolute pointer-events-none"
           style={{
-            position: 'absolute',
-            left: laser.endX - 15,
-            top: laser.endY - 15,
+            left: `${laser.endX - 15}px`,
+            top: `${laser.endY - 15}px`,
             width: '30px',
             height: '30px',
             background: 'radial-gradient(circle, rgba(255,107,107,0.8) 0%, transparent 70%)',
-            opacity,
+            opacity: opacity,
             animation: 'impact 0.3s ease-out',
           }}
         />
         <div
-          className="muzzle-flash"
+          className="absolute pointer-events-none"
           style={{
-            position: 'absolute',
-            left: laser.startX - 8,
-            top: laser.startY - 8,
+            left: `${laser.startX - 8}px`,
+            top: `${laser.startY - 8}px`,
             width: '16px',
             height: '16px',
             background: 'radial-gradient(circle, #ffffff 0%, #ff0000 50%, transparent 70%)',
-            opacity,
+            opacity: opacity,
             animation: 'muzzleFlash 0.2s ease-out',
           }}
         />
@@ -583,7 +575,7 @@ const Game: React.FC = () => {
           position: 'relative',
         }}
         onMouseMove={handleMouseMove}
-        onClick={handleMouseClick}
+        onClick={triggerLaser}
       >
         {targets.map((target) => (
           <div
