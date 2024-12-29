@@ -12,7 +12,7 @@ interface Target {
   color: string;
   rotation: number;
   spawnTime: number;
-  type: 'normal' | 'slime' | 'mini'; // Updated to include 'mini'
+  type: 'normal' | 'slime' | 'mini';
   size: number;
 }
 
@@ -52,8 +52,16 @@ const Game: React.FC = () => {
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const targetRotationSpeed: number = 2;
 
+  const [laser, setLaser] = useState<{
+    startX: number;
+    startY: number;
+    endX: number;
+    endY: number;
+    timestamp: number;
+  } | null>(null);
+
   const songs = [
-    { id: 1, name: 'Lo-Fi Chill Beats', src: 'https://soundcloud.com/oxinym/sets/lofi-beats-royalty-free' }, // SoundCloud playlist
+    { id: 1, name: 'Lo-Fi Chill Beats', src: 'https://soundcloud.com/oxinym/sets/lofi-beats-royalty-free' },
     { id: 2, name: 'Song 1', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
     { id: 3, name: 'Song 2', src: 'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Chad_Crouch/Arps/Chad_Crouch_-_Algorithms.mp3' },
     { id: 4, name: 'Song 3', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3' },
@@ -61,9 +69,8 @@ const Game: React.FC = () => {
     { id: 6, name: 'Song 5', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3' },
   ];
 
-  const [selectedSong, setSelectedSong] = useState(songs[0]); // Default to first song in the list
+  const [selectedSong, setSelectedSong] = useState(songs[0]);
 
-  // Load SoundCloud SDK
   useEffect(() => {
     const script = document.createElement('script');
     script.src = 'https://w.soundcloud.com/player/api.js';
@@ -75,11 +82,10 @@ const Game: React.FC = () => {
     };
   }, []);
 
-  // Handle song change
   useEffect(() => {
     if (gameStarted) {
-      stopMusic(); // Stop the current player
-      startMusic(); // Start the new player
+      stopMusic();
+      startMusic();
     }
   }, [selectedSong]);
 
@@ -142,7 +148,7 @@ const Game: React.FC = () => {
     setTargets((prevTargets) => [...prevTargets, newTarget]);
   };
 
-  const handleTargetClick = (id: number) => {
+  const handleTargetClick = (id: number, e: MouseEvent<HTMLDivElement>) => {
     if (gameOver) return;
     setTargets((prevTargets) => {
       const updatedTargets = prevTargets.filter((target) => target.id !== id);
@@ -150,7 +156,6 @@ const Game: React.FC = () => {
       if (clickedTarget) {
         switch (clickedTarget.type) {
           case 'slime':
-            // Split into two mini targets
             const newMiniTarget1: Target = {
               x: clickedTarget.x,
               y: clickedTarget.y,
@@ -177,13 +182,10 @@ const Game: React.FC = () => {
             };
             return [...updatedTargets, newMiniTarget1, newMiniTarget2];
           case 'mini':
-            // Handle mini target click
             return updatedTargets;
           case 'normal':
-            // Handle normal target click
             return updatedTargets;
           default:
-            // This should never happen
             return updatedTargets;
         }
       }
@@ -191,9 +193,10 @@ const Game: React.FC = () => {
     });
     setScore((prevScore) => prevScore + (combo > 5 ? 2 : 1));
     setCombo((prevCombo) => prevCombo + 1);
+    handleMouseClick(e);
   };
 
-  const handlePowerUpClick = (id: number) => {
+  const handlePowerUpClick = (id: number, e: MouseEvent<HTMLDivElement>) => {
     if (gameOver) return;
     const clickedPowerUp = powerUps.find((pu) => pu.id === id);
     if (!clickedPowerUp) return;
@@ -248,6 +251,7 @@ const Game: React.FC = () => {
       default:
         break;
     }
+    handleMouseClick(e);
   };
 
   const spawnPowerUp = () => {
@@ -282,8 +286,23 @@ const Game: React.FC = () => {
     });
   };
 
-  const handleGameAreaClick = () => {
+  const handleMouseClick = (e: MouseEvent<HTMLDivElement>) => {
     if (gameOver) return;
+
+    if (!gameAreaRef.current) return;
+    const rect = gameAreaRef.current.getBoundingClientRect();
+
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+
+    setLaser({
+      startX: mousePosition.x,
+      startY: mousePosition.y,
+      endX: clickX,
+      endY: clickY,
+      timestamp: Date.now(),
+    });
+
     setLives((prevLives) => {
       const newLives = prevLives - 1;
       if (newLives <= 0) {
@@ -293,6 +312,70 @@ const Game: React.FC = () => {
       }
       return newLives;
     });
+  };
+
+  const renderLaser = () => {
+    if (!laser) return null;
+
+    const age = Date.now() - laser.timestamp;
+    if (age > 300) {
+      setLaser(null);
+      return null;
+    }
+
+    const dx = laser.endX - laser.startX;
+    const dy = laser.endY - laser.startY;
+    const angle = Math.atan2(dy, dx);
+    const length = Math.sqrt(dx * dx + dy * dy);
+    const opacity = Math.max(0, 1 - (age / 300));
+
+    return (
+      <>
+        <div
+          className="laser"
+          style={{
+            position: 'absolute',
+            left: laser.startX,
+            top: laser.startY,
+            transform: `rotate(${angle}rad)`,
+            transformOrigin: '0% 50%',
+            width: `${length}px`,
+            height: '3px',
+            background: 'linear-gradient(90deg, rgba(255,0,0,1) 0%, rgba(255,107,107,0.8) 100%)',
+            boxShadow: '0 0 10px #ff0000, 0 0 20px #ff6b6b',
+            opacity,
+            transition: 'opacity 0.1s ease-out',
+            zIndex: 1000,
+          }}
+        />
+        <div
+          className="impact"
+          style={{
+            position: 'absolute',
+            left: laser.endX - 15,
+            top: laser.endY - 15,
+            width: '30px',
+            height: '30px',
+            background: 'radial-gradient(circle, rgba(255,107,107,0.8) 0%, transparent 70%)',
+            opacity,
+            animation: 'impact 0.3s ease-out',
+          }}
+        />
+        <div
+          className="muzzle-flash"
+          style={{
+            position: 'absolute',
+            left: laser.startX - 8,
+            top: laser.startY - 8,
+            width: '16px',
+            height: '16px',
+            background: 'radial-gradient(circle, #ffffff 0%, #ff0000 50%, transparent 70%)',
+            opacity,
+            animation: 'muzzleFlash 0.2s ease-out',
+          }}
+        />
+      </>
+    );
   };
 
   const startMusic = () => {
@@ -342,11 +425,9 @@ const Game: React.FC = () => {
           const updatedTargets = prevTargets.map((target) => {
             let { x, y, dx, dy } = target;
 
-            // Update position
             x += dx;
             y += dy;
 
-            // Bounce off walls
             if (x < 0 || x > gameWidth - target.size) {
               dx = -dx;
               x = x < 0 ? 0 : gameWidth - target.size;
@@ -366,7 +447,6 @@ const Game: React.FC = () => {
             };
           });
 
-          // Check for expired targets (45 seconds)
           const expiredTargets = updatedTargets.filter(
             (target) => Date.now() - target.spawnTime > 45000
           );
@@ -389,16 +469,13 @@ const Game: React.FC = () => {
           return filteredTargets;
         });
 
-        // Add movement for power-ups
         setPowerUps((prevPowerUps) => {
           const updatedPowerUps = prevPowerUps.map((powerUp) => {
             let { x, y, dx, dy } = powerUp;
 
-            // Update position
             x += dx;
             y += dy;
 
-            // Bounce off walls for power-ups
             if (x < 0 || x > gameWidth - targetSize) {
               dx = -dx;
               x = x < 0 ? 0 : gameWidth - targetSize;
@@ -503,47 +580,45 @@ const Game: React.FC = () => {
         style={{
           width: gameWidth,
           height: gameHeight,
+          position: 'relative',
         }}
         onMouseMove={handleMouseMove}
-        onClick={handleGameAreaClick}
+        onClick={handleMouseClick}
       >
-        {targets.map((target) => {
-          const backgroundColor = target.type === 'slime' ? '#66CCFF' : target.type === 'mini' ? '#FF66CC' : target.color;
-          const borderRadius = target.type === 'slime' || target.type === 'mini' ? '50%' : '10%';
-          return (
-            <div
-              key={target.id}
-              className="target"
-              style={{
-                position: 'absolute',
-                left: target.x,
-                top: target.y,
-                width: target.size,
-                height: target.size,
-                backgroundColor: backgroundColor,
-                borderRadius: borderRadius,
-                transform: `rotate(${target.rotation}deg)`,
-                boxShadow: `0 0 10px ${target.color}`,
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleTargetClick(target.id);
-              }}
-            />
-          );
-        })}
+        {targets.map((target) => (
+          <div
+            key={target.id}
+            className="target"
+            style={{
+              position: 'absolute',
+              left: `${target.x}px`,
+              top: `${target.y}px`,
+              width: `${target.size}px`,
+              height: `${target.size}px`,
+              backgroundColor: target.type === 'slime' ? '#66CCFF' : target.type === 'mini' ? '#FF66CC' : target.color,
+              borderRadius: target.type === 'slime' || target.type === 'mini' ? '50%' : '10%',
+              transform: `rotate(${target.rotation}deg)`,
+              boxShadow: `0 0 10px ${target.color}`,
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleTargetClick(target.id, e);
+            }}
+          />
+        ))}
 
         {powerUps.map((powerUp) => (
           <div
             key={powerUp.id}
             className={`power-up power-up-${powerUp.type}`}
             style={{
-              left: powerUp.x,
-              top: powerUp.y,
+              position: 'absolute',
+              left: `${powerUp.x}px`,
+              top: `${powerUp.y}px`,
             }}
             onClick={(e) => {
               e.stopPropagation();
-              handlePowerUpClick(powerUp.id);
+              handlePowerUpClick(powerUp.id, e);
             }}
           >
             {powerUp.type === 'extra-life' ? '+' :
@@ -557,10 +632,12 @@ const Game: React.FC = () => {
         <div
           className="crosshair"
           style={{
-            left: mousePosition.x - 6,
-            top: mousePosition.y - 6,
+            position: 'absolute',
+            left: `${mousePosition.x - 6}px`,
+            top: `${mousePosition.y - 6}px`,
           }}
         />
+        {renderLaser()}
       </div>
 
       <div className="score-display">
@@ -622,7 +699,7 @@ const Game: React.FC = () => {
       </div>
 
       <select
-        value={selectedSong.id}
+        value={selectedSong.id.toString()}
         onChange={(e) => {
           const selectedId = parseInt(e.target.value);
           setSelectedSong(songs.find(song => song.id === selectedId) || songs[0]);
@@ -630,7 +707,7 @@ const Game: React.FC = () => {
         className="song-selector"
       >
         {songs.map(song => (
-          <option key={song.id} value={song.id}>{song.name}</option>
+          <option key={song.id} value={song.id.toString()}>{song.name}</option>
         ))}
       </select>
     </div>
