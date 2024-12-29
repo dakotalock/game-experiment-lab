@@ -148,110 +148,6 @@ const Game: React.FC = () => {
     setTargets((prevTargets) => [...prevTargets, newTarget]);
   };
 
-  const handleTargetClick = (id: number, e: MouseEvent<HTMLDivElement>) => {
-    if (gameOver) return;
-    setTargets((prevTargets) => {
-      const updatedTargets = prevTargets.filter((target) => target.id !== id);
-      const clickedTarget = prevTargets.find((target) => target.id === id);
-      if (clickedTarget) {
-        switch (clickedTarget.type) {
-          case 'slime':
-            const newMiniTarget1: Target = {
-              x: clickedTarget.x,
-              y: clickedTarget.y,
-              dx: (Math.random() - 0.5) * targetSpeed,
-              dy: (Math.random() - 0.5) * targetSpeed,
-              id: Date.now() + Math.random(),
-              color: getRandomColor(),
-              rotation: 0,
-              spawnTime: Date.now(),
-              type: 'mini',
-              size: targetSize / 2,
-            };
-            const newMiniTarget2: Target = {
-              x: clickedTarget.x,
-              y: clickedTarget.y,
-              dx: (Math.random() - 0.5) * targetSpeed,
-              dy: (Math.random() - 0.5) * targetSpeed,
-              id: Date.now() + Math.random(),
-              color: getRandomColor(),
-              rotation: 0,
-              spawnTime: Date.now(),
-              type: 'mini',
-              size: targetSize / 2,
-            };
-            return [...updatedTargets, newMiniTarget1, newMiniTarget2];
-          case 'mini':
-            return updatedTargets;
-          case 'normal':
-            return updatedTargets;
-          default:
-            return updatedTargets;
-        }
-      }
-      return updatedTargets;
-    });
-    setScore((prevScore) => prevScore + (combo > 5 ? 2 : 1));
-    setCombo((prevCombo) => prevCombo + 1);
-  };
-
-  const handlePowerUpClick = (id: number, e: MouseEvent<HTMLDivElement>) => {
-    if (gameOver) return;
-    const clickedPowerUp = powerUps.find((pu) => pu.id === id);
-    if (!clickedPowerUp) return;
-    setPowerUps((prevPowerUps) => prevPowerUps.filter((powerUp) => powerUp.id !== id));
-
-    switch (clickedPowerUp.type) {
-      case 'extra-life':
-        setLives((prevLives) => prevLives + 1);
-        break;
-      case 'time-freeze':
-        setCombo(0);
-        setTargets((prevTargets) =>
-          prevTargets.map((target) => ({
-            ...target,
-            dx: 0,
-            dy: 0,
-          }))
-        );
-        setTimeout(() => {
-          setTargets((prevTargets) =>
-            prevTargets.map((target) => ({
-              ...target,
-              dx: (Math.random() - 0.5) * targetSpeed,
-              dy: (Math.random() - 0.5) * targetSpeed,
-            }))
-          );
-        }, 3000);
-        break;
-      case 'double-points':
-        setScore((prevScore) => prevScore + 10);
-        break;
-      case 'skull':
-        setLives((prevLives) => Math.max(prevLives - 1, 0));
-        if (lives <= 1) {
-          setGameOver(true);
-          setGameStarted(false);
-          stopMusic();
-        }
-        break;
-      case 'lightning':
-        const pointsToAddLightning = targets.length;
-        setTargets([]);
-        setScore((prevScore) => prevScore + pointsToAddLightning);
-        break;
-      case 'lava-shield':
-        const halfLength = Math.ceil(targets.length / 2);
-        const pointsToAddLavaShield = halfLength;
-        setTargets((prevTargets) => prevTargets.slice(halfLength));
-        setScore((prevScore) => prevScore + pointsToAddLavaShield);
-        setLives((prevLives) => prevLives + 2);
-        break;
-      default:
-        break;
-    }
-  };
-
   const spawnPowerUp = () => {
     const x = Math.random() * (gameWidth - targetSize);
     const y = Math.random() * (gameHeight - targetSize);
@@ -334,6 +230,140 @@ const Game: React.FC = () => {
       endY: clickY,
       timestamp: Date.now(),
     });
+  };
+
+  const handleTargetClick = (id: number, e: MouseEvent<HTMLDivElement>) => {
+    if (gameOver) return;
+
+    // Trigger the laser animation
+    if (!gameAreaRef.current) return;
+    const rect = gameAreaRef.current.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+    setLaser({
+      startX: mousePosition.x,
+      startY: mousePosition.y,
+      endX: clickX,
+      endY: clickY,
+      timestamp: Date.now(),
+    });
+
+    // Handle target click logic
+    setTargets((prevTargets) => {
+      const updatedTargets = prevTargets.filter((target) => target.id !== id);
+      const clickedTarget = prevTargets.find((target) => target.id === id);
+      if (clickedTarget) {
+        switch (clickedTarget.type) {
+          case 'slime':
+            const newMiniTarget1: Target = {
+              x: clickedTarget.x,
+              y: clickedTarget.y,
+              dx: (Math.random() - 0.5) * targetSpeed,
+              dy: (Math.random() - 0.5) * targetSpeed,
+              id: Date.now() + Math.random(),
+              color: getRandomColor(),
+              rotation: 0,
+              spawnTime: Date.now(),
+              type: 'mini',
+              size: targetSize / 2,
+            };
+            const newMiniTarget2: Target = {
+              x: clickedTarget.x,
+              y: clickedTarget.y,
+              dx: (Math.random() - 0.5) * targetSpeed,
+              dy: (Math.random() - 0.5) * targetSpeed,
+              id: Date.now() + Math.random(),
+              color: getRandomColor(),
+              rotation: 0,
+              spawnTime: Date.now(),
+              type: 'mini',
+              size: targetSize / 2,
+            };
+            return [...updatedTargets, newMiniTarget1, newMiniTarget2];
+          case 'mini':
+            return updatedTargets;
+          case 'normal':
+            return updatedTargets;
+          default:
+            return updatedTargets;
+        }
+      }
+      return updatedTargets;
+    });
+    setScore((prevScore) => prevScore + (combo > 5 ? 2 : 1));
+    setCombo((prevCombo) => prevCombo + 1);
+  };
+
+  const handlePowerUpClick = (id: number, e: MouseEvent<HTMLDivElement>) => {
+    if (gameOver) return;
+
+    // Trigger the laser animation
+    if (!gameAreaRef.current) return;
+    const rect = gameAreaRef.current.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+    setLaser({
+      startX: mousePosition.x,
+      startY: mousePosition.y,
+      endX: clickX,
+      endY: clickY,
+      timestamp: Date.now(),
+    });
+
+    // Handle power-up click logic
+    const clickedPowerUp = powerUps.find((pu) => pu.id === id);
+    if (!clickedPowerUp) return;
+    setPowerUps((prevPowerUps) => prevPowerUps.filter((powerUp) => powerUp.id !== id));
+
+    switch (clickedPowerUp.type) {
+      case 'extra-life':
+        setLives((prevLives) => prevLives + 1);
+        break;
+      case 'time-freeze':
+        setCombo(0);
+        setTargets((prevTargets) =>
+          prevTargets.map((target) => ({
+            ...target,
+            dx: 0,
+            dy: 0,
+          }))
+        );
+        setTimeout(() => {
+          setTargets((prevTargets) =>
+            prevTargets.map((target) => ({
+              ...target,
+              dx: (Math.random() - 0.5) * targetSpeed,
+              dy: (Math.random() - 0.5) * targetSpeed,
+            }))
+          );
+        }, 3000);
+        break;
+      case 'double-points':
+        setScore((prevScore) => prevScore + 10);
+        break;
+      case 'skull':
+        setLives((prevLives) => Math.max(prevLives - 1, 0));
+        if (lives <= 1) {
+          setGameOver(true);
+          setGameStarted(false);
+          stopMusic();
+        }
+        break;
+      case 'lightning':
+        const pointsToAddLightning = targets.length;
+        setTargets([]);
+        setScore((prevScore) => prevScore + pointsToAddLightning);
+        break;
+      case 'lava-shield':
+        const halfLength = Math.ceil(targets.length / 2);
+        const pointsToAddLavaShield = halfLength;
+        setTargets((prevTargets) => prevTargets.slice(halfLength));
+        setScore((prevScore) => prevScore + pointsToAddLavaShield);
+        setLives((prevLives) => prevLives + 2);
+        break;
+      default:
+        break;
+    }
   };
 
   const renderLaser = () => {
