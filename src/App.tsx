@@ -476,7 +476,6 @@ const Game: React.FC = () => {
       <div className="hidden">
         {selectedSong.id === 1 ? (
           <iframe
-            key={selectedSong.src} // Force re-render by changing the key
             ref={soundCloudRef}
             width="0"
             height="0"
