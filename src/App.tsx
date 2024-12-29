@@ -193,7 +193,6 @@ const Game: React.FC = () => {
     });
     setScore((prevScore) => prevScore + (combo > 5 ? 2 : 1));
     setCombo((prevCombo) => prevCombo + 1);
-    triggerLaser(e);
   };
 
   const handlePowerUpClick = (id: number, e: MouseEvent<HTMLDivElement>) => {
@@ -251,7 +250,6 @@ const Game: React.FC = () => {
       default:
         break;
     }
-    triggerLaser(e);
   };
 
   const spawnPowerUp = () => {
@@ -286,26 +284,55 @@ const Game: React.FC = () => {
     });
   };
 
-  const triggerLaser = (e: MouseEvent<HTMLDivElement>) => {
+  const handleMouseClick = (e: MouseEvent<HTMLDivElement>) => {
+    if (gameOver) return;
+
     if (!gameAreaRef.current) return;
     const rect = gameAreaRef.current.getBoundingClientRect();
+
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
+
+    // Check if the click hit a target
+    const hitTarget = targets.some((target) => {
+      const targetCenterX = target.x + target.size / 2;
+      const targetCenterY = target.y + target.size / 2;
+      const distance = Math.sqrt(
+        Math.pow(clickX - targetCenterX, 2) + Math.pow(clickY - targetCenterY, 2)
+      );
+      return distance <= target.size / 2;
+    });
+
+    // Check if the click hit a power-up
+    const hitPowerUp = powerUps.some((powerUp) => {
+      const powerUpCenterX = powerUp.x + targetSize / 2;
+      const powerUpCenterY = powerUp.y + targetSize / 2;
+      const distance = Math.sqrt(
+        Math.pow(clickX - powerUpCenterX, 2) + Math.pow(clickY - powerUpCenterY, 2)
+      );
+      return distance <= targetSize / 2;
+    });
+
+    // Only decrease lives if the click missed both targets and power-ups
+    if (!hitTarget && !hitPowerUp) {
+      setLives((prevLives) => {
+        const newLives = prevLives - 1;
+        if (newLives <= 0) {
+          setGameOver(true);
+          setGameStarted(false);
+          stopMusic();
+        }
+        return newLives;
+      });
+    }
+
+    // Trigger the laser animation
     setLaser({
       startX: mousePosition.x,
       startY: mousePosition.y,
       endX: clickX,
       endY: clickY,
       timestamp: Date.now(),
-    });
-    setLives((prevLives) => {
-      const newLives = prevLives - 1;
-      if (newLives <= 0) {
-        setGameOver(true);
-        setGameStarted(false);
-        stopMusic();
-      }
-      return newLives;
     });
   };
 
@@ -327,42 +354,45 @@ const Game: React.FC = () => {
     return (
       <>
         <div
-          className="absolute pointer-events-none"
+          className="laser"
           style={{
-            left: `${laser.startX}px`,
-            top: `${laser.startY}px`,
+            position: 'absolute',
+            left: laser.startX,
+            top: laser.startY,
             transform: `rotate(${angle}rad)`,
             transformOrigin: '0% 50%',
             width: `${length}px`,
             height: '3px',
             background: 'linear-gradient(90deg, rgba(255,0,0,1) 0%, rgba(255,107,107,0.8) 100%)',
             boxShadow: '0 0 10px #ff0000, 0 0 20px #ff6b6b',
-            opacity: opacity,
+            opacity,
             transition: 'opacity 0.1s ease-out',
             zIndex: 1000,
           }}
         />
         <div
-          className="absolute pointer-events-none"
+          className="impact"
           style={{
-            left: `${laser.endX - 15}px`,
-            top: `${laser.endY - 15}px`,
+            position: 'absolute',
+            left: laser.endX - 15,
+            top: laser.endY - 15,
             width: '30px',
             height: '30px',
             background: 'radial-gradient(circle, rgba(255,107,107,0.8) 0%, transparent 70%)',
-            opacity: opacity,
+            opacity,
             animation: 'impact 0.3s ease-out',
           }}
         />
         <div
-          className="absolute pointer-events-none"
+          className="muzzle-flash"
           style={{
-            left: `${laser.startX - 8}px`,
-            top: `${laser.startY - 8}px`,
+            position: 'absolute',
+            left: laser.startX - 8,
+            top: laser.startY - 8,
             width: '16px',
             height: '16px',
             background: 'radial-gradient(circle, #ffffff 0%, #ff0000 50%, transparent 70%)',
-            opacity: opacity,
+            opacity,
             animation: 'muzzleFlash 0.2s ease-out',
           }}
         />
@@ -575,7 +605,7 @@ const Game: React.FC = () => {
           position: 'relative',
         }}
         onMouseMove={handleMouseMove}
-        onClick={triggerLaser}
+        onClick={handleMouseClick}
       >
         {targets.map((target) => (
           <div
