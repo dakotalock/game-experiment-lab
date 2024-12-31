@@ -42,7 +42,7 @@ const Game: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [difficulty, setDifficulty] = useState<'gabriel' | 'easy' | 'normal' | 'hard'>('normal');
   const [showInstructions, setShowInstructions] = useState<boolean>(false);
-  const [bossSpawnRate, setBossSpawnRate] = useState<number>(0.02); // Initial 2% spawn rate
+  const [bossSpawnRate, setBossSpawnRate] = useState<number>(0.03); // Initial 3% spawn rate
   const audioPlayerRef = useRef<any>(null);
   const soundCloudRef = useRef<HTMLIFrameElement>(null);
   const gameAreaRef = useRef<HTMLDivElement>(null);
@@ -52,7 +52,7 @@ const Game: React.FC = () => {
   const targetSpeed: number = 2;
   const targetSpawnInterval: number = 1500 / 2;
   const powerUpSpawnInterval: number = 5000 / 2;
-  const powerUpDuration: number = 5000;
+  const powerUpDuration: number = 3000; // Decreased to 3 seconds for lightning bolt
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const targetRotationSpeed: number = 2;
 
@@ -298,6 +298,41 @@ const Game: React.FC = () => {
         return prevTargets.map((target) =>
           target.id === id ? { ...target, health: updatedHealth } : target
         );
+      }
+
+      // Handle slime targets
+      if (clickedTarget.type === 'slime') {
+        const miniTarget1: Target = {
+          x: clickedTarget.x,
+          y: clickedTarget.y,
+          dx: (Math.random() - 0.5) * targetSpeed,
+          dy: (Math.random() - 0.5) * targetSpeed,
+          id: Date.now() + Math.random(),
+          color: '#FF66CC',
+          rotation: 0,
+          spawnTime: Date.now(),
+          type: 'mini',
+          size: targetSize / 2,
+        };
+
+        const miniTarget2: Target = {
+          x: clickedTarget.x,
+          y: clickedTarget.y,
+          dx: (Math.random() - 0.5) * targetSpeed,
+          dy: (Math.random() - 0.5) * targetSpeed,
+          id: Date.now() + Math.random(),
+          color: '#FF66CC',
+          rotation: 0,
+          spawnTime: Date.now(),
+          type: 'mini',
+          size: targetSize / 2,
+        };
+
+        return [
+          ...prevTargets.filter((target) => target.id !== id),
+          miniTarget1,
+          miniTarget2,
+        ];
       }
 
       // Handle regular targets
@@ -574,7 +609,7 @@ const Game: React.FC = () => {
           });
 
           const expiredTargets = updatedTargets.filter(
-            (target) => Date.now() - target.spawnTime > 45000
+            (target) => Date.now() - target.spawnTime > 20000 // Decreased to 20 seconds
           );
 
           if (expiredTargets.length > 0) {
@@ -840,7 +875,6 @@ const Game: React.FC = () => {
         <div className="text-xl text-white">Score: {score}</div>
         <div className="text-xl text-white">Lives: {lives}</div>
         <div className="text-xl text-white">Combo: x{combo}</div>
-        <div className="text-xl text-white">Boss Rate: {Math.round(bossSpawnRate * 100)}%</div>
       </div>
 
       <div className="mt-4">
