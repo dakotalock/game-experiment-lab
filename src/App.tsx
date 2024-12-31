@@ -14,7 +14,7 @@ interface Target {
   spawnTime: number;
   type: 'normal' | 'slime' | 'mini';
   size: number;
-  isPopping?: boolean; // New property for animation state
+  isPopping?: boolean;
 }
 
 type PowerUpType = 'extra-life' | 'time-freeze' | 'double-points' | 'skull' | 'lightning' | 'lava-shield';
@@ -44,8 +44,8 @@ const Game: React.FC = () => {
   const soundCloudRef = useRef<HTMLIFrameElement>(null);
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const targetSize: number = 30;
-  const gameWidth: number = 600;
-  const gameHeight: number = 400;
+  const [gameWidth, setGameWidth] = useState<number>(600);
+  const [gameHeight, setGameHeight] = useState<number>(400);
   const targetSpeed: number = 2;
   const targetSpawnInterval: number = 1500 / 2;
   const powerUpSpawnInterval: number = 5000 / 2;
@@ -71,6 +71,25 @@ const Game: React.FC = () => {
   ];
 
   const [selectedSong, setSelectedSong] = useState(songs[0]);
+
+  // Calculate responsive dimensions
+  useEffect(() => {
+    const updateDimensions = () => {
+      const maxWidth = 600;
+      const maxHeight = 400;
+      const aspectRatio = maxWidth / maxHeight;
+
+      const newWidth = Math.min(window.innerWidth * 0.9, maxWidth);
+      const newHeight = newWidth / aspectRatio;
+
+      setGameWidth(newWidth);
+      setGameHeight(newHeight);
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
 
   useEffect(() => {
     const script = document.createElement('script');
@@ -190,7 +209,6 @@ const Game: React.FC = () => {
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
 
-    // Check if the click hit a target
     const hitTarget = targets.some((target) => {
       const targetCenterX = target.x + target.size / 2;
       const targetCenterY = target.y + target.size / 2;
@@ -200,7 +218,6 @@ const Game: React.FC = () => {
       return distance <= target.size / 2;
     });
 
-    // Check if the click hit a power-up
     const hitPowerUp = powerUps.some((powerUp) => {
       const powerUpCenterX = powerUp.x + targetSize / 2;
       const powerUpCenterY = powerUp.y + targetSize / 2;
@@ -210,7 +227,6 @@ const Game: React.FC = () => {
       return distance <= targetSize / 2;
     });
 
-    // Only decrease lives if the click missed both targets and power-ups
     if (!hitTarget && !hitPowerUp) {
       setLives((prevLives) => {
         const newLives = prevLives - 1;
@@ -223,7 +239,6 @@ const Game: React.FC = () => {
       });
     }
 
-    // Trigger the laser animation
     setLaser({
       startX: mousePosition.x,
       startY: mousePosition.y,
@@ -236,7 +251,6 @@ const Game: React.FC = () => {
   const handleTargetClick = (id: number, e: MouseEvent<HTMLDivElement>) => {
     if (gameOver) return;
 
-    // Trigger the laser animation
     if (!gameAreaRef.current) return;
     const rect = gameAreaRef.current.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
@@ -249,14 +263,12 @@ const Game: React.FC = () => {
       timestamp: Date.now(),
     });
 
-    // First set the popping animation
     setTargets((prevTargets) =>
       prevTargets.map((target) =>
         target.id === id ? { ...target, isPopping: true } : target
       )
     );
 
-    // Remove target after animation
     setTimeout(() => {
       setTargets((prevTargets) => {
         const updatedTargets = prevTargets.filter((target) => target.id !== id);
@@ -297,13 +309,12 @@ const Game: React.FC = () => {
       });
       setScore((prevScore) => prevScore + (combo > 5 ? 2 : 1));
       setCombo((prevCombo) => prevCombo + 1);
-    }, 300); // Match this with CSS animation duration
+    }, 300);
   };
 
   const handlePowerUpClick = (id: number, e: MouseEvent<HTMLDivElement>) => {
     if (gameOver) return;
 
-    // Trigger the laser animation
     if (!gameAreaRef.current) return;
     const rect = gameAreaRef.current.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
@@ -316,7 +327,6 @@ const Game: React.FC = () => {
       timestamp: Date.now(),
     });
 
-    // Handle power-up click logic
     const clickedPowerUp = powerUps.find((pu) => pu.id === id);
     if (!clickedPowerUp) return;
     setPowerUps((prevPowerUps) => prevPowerUps.filter((powerUp) => powerUp.id !== id));
@@ -342,7 +352,7 @@ const Game: React.FC = () => {
               dy: (Math.random() - 0.5) * targetSpeed,
             }))
           );
-        }, 5000); // Increased from 3000ms to 5000ms
+        }, 5000);
         break;
       case 'double-points':
         setScore((prevScore) => prevScore + 10);
@@ -356,34 +366,28 @@ const Game: React.FC = () => {
         }
         break;
       case 'lightning':
-        // Set isPopping to true for all targets
         setTargets((currentTargets) =>
           currentTargets.map((target) => ({ ...target, isPopping: true }))
         );
-
-        // Remove targets after the animation completes
         setTimeout(() => {
           setTargets((currentTargets) => {
             setScore((prevScore) => prevScore + currentTargets.length);
             return [];
           });
-        }, 300); // Match this with CSS animation duration
+        }, 300);
         break;
       case 'lava-shield':
         const halfLength = Math.ceil(targets.length / 2);
-        // Set isPopping to true for the first half of targets
         setTargets((prevTargets) =>
           prevTargets.map((target, index) =>
             index < halfLength ? { ...target, isPopping: true } : target
           )
         );
-
-        // Remove the first half of targets after the animation completes
         setTimeout(() => {
-          setTargets((prevTargets) => prevTargets.slice(halfLength));
+          setTargets((prevTargets) => prevTargets.filter((_, index) => index >= halfLength));
           setScore((prevScore) => prevScore + halfLength);
           setLives((prevLives) => prevLives + 2);
-        }, 300); // Match this with CSS animation duration
+        }, 300);
         break;
       default:
         break;
@@ -475,10 +479,10 @@ const Game: React.FC = () => {
   const startGame = () => {
     setScore(0);
     setLives(
-      difficulty === 'gabriel' ? 50 : // Gabriel Mode: 50 lives
-      difficulty === 'easy' ? 10 :    // Easy: 10 lives
-      difficulty === 'normal' ? 3 :   // Normal: 3 lives
-      1                              // Hard: 1 life
+      difficulty === 'gabriel' ? 50 :
+      difficulty === 'easy' ? 10 :
+      difficulty === 'normal' ? 3 :
+      1
     );
     setGameOver(false);
     setTargets([]);
@@ -492,10 +496,10 @@ const Game: React.FC = () => {
     setGameStarted(false);
     setScore(0);
     setLives(
-      difficulty === 'gabriel' ? 50 : // Gabriel Mode: 50 lives
-      difficulty === 'easy' ? 10 :    // Easy: 10 lives
-      difficulty === 'normal' ? 3 :   // Normal: 3 lives
-      1                              // Hard: 1 life
+      difficulty === 'gabriel' ? 50 :
+      difficulty === 'easy' ? 10 :
+      difficulty === 'normal' ? 3 :
+      1
     );
     setGameOver(false);
     setTargets([]);
@@ -537,7 +541,6 @@ const Game: React.FC = () => {
             (target) => Date.now() - target.spawnTime > 45000
           );
 
-          // Add popping animation to expired targets
           if (expiredTargets.length > 0) {
             updatedTargets.forEach((target) => {
               if (expiredTargets.find((et) => et.id === target.id)) {
@@ -545,7 +548,6 @@ const Game: React.FC = () => {
               }
             });
 
-            // Remove expired targets after the animation completes
             setTimeout(() => {
               setTargets((current) =>
                 current.filter((t) => !expiredTargets.find((et) => et.id === t.id))
@@ -560,7 +562,7 @@ const Game: React.FC = () => {
                 }
                 return Math.max(newLives, 0);
               });
-            }, 300); // Match this with CSS animation duration
+            }, 300);
           }
 
           return updatedTargets;
@@ -679,6 +681,7 @@ const Game: React.FC = () => {
           height: gameHeight,
           position: 'relative',
           margin: '0 auto',
+          touchAction: 'none', // Prevent default touch behaviors
         }}
         onMouseMove={handleMouseMove}
         onClick={handleMouseClick}
@@ -713,7 +716,7 @@ const Game: React.FC = () => {
               position: 'absolute',
               left: `${powerUp.x}px`,
               top: `${powerUp.y}px`,
-              backgroundColor: powerUp.type === 'time-freeze' ? 'black' : undefined, // Only freeze power-up is black
+              backgroundColor: powerUp.type === 'time-freeze' ? 'black' : undefined,
             }}
             onClick={(e) => {
               e.stopPropagation();
