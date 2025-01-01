@@ -49,8 +49,8 @@ const Game: React.FC = () => {
   const targetSpeed: number = 2;
   const targetSpawnInterval: number = 1500 / 2;
   const powerUpSpawnInterval: number = 5000 / 2;
-  const powerUpDuration: number = 5000; // Changed from 3000 to 5000 ms
-  const targetLifespan: number = 45000; // Added new constant for clarity
+  const powerUpDuration: number = 5000;
+  const targetLifespan: number = 45000;
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const targetRotationSpeed: number = 2;
 
@@ -63,10 +63,10 @@ const Game: React.FC = () => {
   } | null>(null);
 
   const songs = [
-    { id: 1, name: 'Relaxing Music', src: 'https://soundcloud.com/relaxingmusicok' },
-    { id: 2, name: 'Royalty Free Ambient Music', src: 'https://soundcloud.com/royalty-free-ambient' },
-    { id: 3, name: 'Soothing Relaxation', src: 'https://soundcloud.com/soothingrelaxation' },
-    { id: 4, name: 'Royalty Free Meditation Music', src: 'https://soundcloud.com/royaltyfreemeditation' }
+    { id: 1, name: 'Lo-Fi Chill Beats', src: 'https://soundcloud.com/oxinym/sets/lofi-beats-royalty-free' },
+    { id: 2, name: 'Relaxing Music', src: 'https://soundcloud.com/relaxingmusicok' },
+    { id: 3, name: 'Royalty Free Ambient Music', src: 'https://soundcloud.com/royalty-free-ambient' },
+    { id: 4, name: 'Soothing Relaxation', src: 'https://soundcloud.com/soothingrelaxation' }
   ];
 
   const [selectedSong, setSelectedSong] = useState(songs[0]);
@@ -597,22 +597,21 @@ const Game: React.FC = () => {
           });
 
           const expiredTargets = updatedTargets.filter(
-            (target) => Date.now() - target.spawnTime > targetLifespan // Using new constant
+            (target) => Date.now() - target.spawnTime > targetLifespan
           );
 
           if (expiredTargets.length > 0) {
-            updatedTargets.forEach((target) => {
-              if (expiredTargets.find((et) => et.id === target.id)) {
-                target.isPopping = true;
-              }
-            });
+            // First set popping animation
+            setTargets(current => 
+              current.map(target => ({
+                ...target,
+                isPopping: expiredTargets.find(et => et.id === target.id) ? true : target.isPopping
+              }))
+            );
 
+            // After animation, remove targets and subtract life
             setTimeout(() => {
-              setTargets((current) =>
-                current.filter((t) => !expiredTargets.find((et) => et.id === t.id))
-              );
-              
-              // Only subtract ONE life total, not one per target
+              setTargets(current => current.filter(t => !expiredTargets.find(et => et.id === t.id)));
               setLives(prevLives => {
                 const newLives = prevLives - 1;
                 if (newLives <= 0) {
@@ -620,7 +619,7 @@ const Game: React.FC = () => {
                 }
                 return newLives;
               });
-            }, 300);
+            }, 300); // Match this with your CSS animation duration
           }
 
           return updatedTargets;
@@ -672,12 +671,17 @@ const Game: React.FC = () => {
   useEffect(() => {
     if (gameStarted && !gameOver) {
       const bossRateInterval = setInterval(() => {
-        setBossSpawnRate((prev) => Math.min(prev + 0.01, 0.2));
-      }, 30000);
+        setBossSpawnRate((prev) => {
+          // Gradually increase based on score
+          const baseRate = 0.03;
+          const scoreMultiplier = Math.floor(score / 100);
+          return Math.min(baseRate + (scoreMultiplier * 0.02), 0.2);
+        });
+      }, 30000); // Check every 30 seconds
 
       return () => clearInterval(bossRateInterval);
     }
-  }, [gameStarted, gameOver]);
+  }, [gameStarted, gameOver, score]);
 
   useEffect(() => {
     if (soundCloudRef.current) {
