@@ -609,17 +609,19 @@ const Game: React.FC = () => {
               }))
             );
 
-            // After animation, remove targets and subtract life
+            // After animation, remove targets and subtract one life per target
             setTimeout(() => {
               setTargets(current => current.filter(t => !expiredTargets.find(et => et.id === t.id)));
+              
+              // Subtract one life per expired target
               setLives(prevLives => {
-                const newLives = prevLives - 1;
+                const newLives = Math.max(prevLives - expiredTargets.length, 0);
                 if (newLives <= 0) {
                   handleGameOver();
                 }
                 return newLives;
               });
-            }, 300); // Match this with your CSS animation duration
+            }, 300);
           }
 
           return updatedTargets;
