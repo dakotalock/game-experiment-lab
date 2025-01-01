@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useRef, MouseEvent } from 'react';
-import AudioPlayer from 'react-h5-audio-player';
-import 'react-h5-audio-player/lib/styles.css';
 import './App.css';
 
 interface Target {
@@ -42,8 +40,7 @@ const Game: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [difficulty, setDifficulty] = useState<'gabriel' | 'easy' | 'normal' | 'hard'>('normal');
   const [showInstructions, setShowInstructions] = useState<boolean>(false);
-  const [bossSpawnRate, setBossSpawnRate] = useState<number>(0.03); // Initial 3% spawn rate
-  const audioPlayerRef = useRef<any>(null);
+  const [bossSpawnRate, setBossSpawnRate] = useState<number>(0.03);
   const soundCloudRef = useRef<HTMLIFrameElement>(null);
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const targetSize: number = 30;
@@ -52,8 +49,8 @@ const Game: React.FC = () => {
   const targetSpeed: number = 2;
   const targetSpawnInterval: number = 1500 / 2;
   const powerUpSpawnInterval: number = 5000 / 2;
-  const powerUpDuration: number = 3000; // Decreased to 3 seconds for lightning bolt
-  const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 }); // Fixed line
+  const powerUpDuration: number = 3000;
+  const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const targetRotationSpeed: number = 2;
 
   const [laser, setLaser] = useState<{
@@ -66,152 +63,51 @@ const Game: React.FC = () => {
 
   const songs = [
     { id: 1, name: 'Lo-Fi Chill Beats', src: 'https://soundcloud.com/oxinym/sets/lofi-beats-royalty-free' },
-    { id: 2, name: 'Song 1', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-    { id: 3, name: 'Song 2', src: 'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Chad_Crouch/Arps/Chad_Crouch_-_Algorithms.mp3' },
-    { id: 4, name: 'Song 3', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3' },
-    { id: 5, name: 'Song 4', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
-    { id: 6, name: 'Song 5', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3' },
+    { id: 2, name: 'Chillhop Essentials', src: 'https://soundcloud.com/chillhopdotcom/sets/chillhop-essentials-spring-2023' },
+    { id: 3, name: 'Jazz Vibes', src: 'https://soundcloud.com/jazzvibes/sets/jazz-vibes-2023' }
   ];
 
   const [selectedSong, setSelectedSong] = useState(songs[0]);
 
-  // Inline random color generator
-  const getRandomColor = (): string => {
-    const letters = '0123456789ABCDEF';
-    let color = '#';
-    for (let i = 0; i < 6; i++) {
-      color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-  };
-
-  // Calculate responsive dimensions
   useEffect(() => {
-    const updateDimensions = () => {
-      const maxWidth = 600;
-      const maxHeight = 400;
-      const aspectRatio = maxWidth / maxHeight;
+    const script = document.createElement('script');
+    script.src = 'https://w.soundcloud.com/player/api.js';
+    script.async = true;
+    document.body.appendChild(script);
 
-      const newWidth = Math.min(window.innerWidth * 0.9, maxWidth);
-      const newHeight = newWidth / aspectRatio;
-
-      setGameWidth(newWidth);
-      setGameHeight(newHeight);
+    return () => {
+      document.body.removeChild(script);
     };
-
-    updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-    return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
-  // Boss spawn logic
-  const spawnBoss = () => {
-    const x = Math.random() * (gameWidth - targetSize * 2);
-    const y = Math.random() * (gameHeight - targetSize * 2);
-    const dx = (Math.random() - 0.5) * (targetSpeed * 0.75); // Slower movement
-    const dy = (Math.random() - 0.5) * (targetSpeed * 0.75);
-    const newBoss: Target = {
-      x,
-      y,
-      dx,
-      dy,
-      id: Date.now() + Math.random(),
-      color: '#FFD700', // Gold color
-      rotation: 0,
-      spawnTime: Date.now(),
-      type: 'boss',
-      size: targetSize * 2, // Double size
-      health: 5,
-      isImmune: true, // Make boss immune to power-ups
-    };
-    setTargets((prevTargets) => [...prevTargets, newBoss]);
-  };
-
-  // Spawn targets (including bosses)
-  const spawnTarget = () => {
-    const shouldSpawnBoss = Math.random() < bossSpawnRate;
-    if (shouldSpawnBoss) {
-      spawnBoss();
-      return;
+  const startMusic = () => {
+    if (soundCloudRef.current) {
+      try {
+        const widget = (window as any).SC.Widget(soundCloudRef.current);
+        widget.play();
+      } catch (error) {
+        console.warn('Failed to start music:', error);
+      }
     }
+  };
 
-    const x = Math.random() * (gameWidth - targetSize);
-    const y = Math.random() * (gameHeight - targetSize);
-    const dx = (Math.random() - 0.5) * targetSpeed;
-    const dy = (Math.random() - 0.5) * targetSpeed;
-    const color = getRandomColor();
-    let type: 'normal' | 'slime' | 'mini' = 'normal';
-    const random = Math.random();
-    if (random < 0.1) {
-      type = 'slime';
-    } else if (random < 0.2) {
-      type = 'mini';
+  const stopMusic = () => {
+    if (soundCloudRef.current) {
+      try {
+        const widget = (window as any).SC.Widget(soundCloudRef.current);
+        widget.pause();
+      } catch (error) {
+        console.warn('Failed to stop music:', error);
+      }
     }
-    let size: number;
-    switch (type) {
-      case 'slime':
-        size = targetSize * 1.2;
-        break;
-      case 'mini':
-        size = targetSize / 2;
-        break;
-      case 'normal':
-        size = targetSize;
-        break;
-      default:
-        size = targetSize;
-        break;
-    }
-    const newTarget: Target = {
-      x,
-      y,
-      dx,
-      dy,
-      id: Date.now() + Math.random(),
-      color,
-      rotation: 0,
-      spawnTime: Date.now(),
-      type,
-      size,
-    };
-    setTargets((prevTargets) => [...prevTargets, newTarget]);
   };
 
-  // Spawn power-ups
-  const spawnPowerUp = () => {
-    const x = Math.random() * (gameWidth - targetSize);
-    const y = Math.random() * (gameHeight - targetSize);
-    const dx = (Math.random() - 0.5) * targetSpeed;
-    const dy = (Math.random() - 0.5) * targetSpeed;
-    const powerUpTypes: PowerUpType[] = ['extra-life', 'time-freeze', 'double-points', 'skull', 'lightning', 'lava-shield'];
-    const type: PowerUpType = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
-    const newPowerUp: PowerUp = {
-      x,
-      y,
-      dx,
-      dy,
-      id: Date.now() + Math.random(),
-      type,
-      spawnTime: Date.now(),
-    };
-    setPowerUps((prevPowerUps) => [...prevPowerUps, newPowerUp]);
-
-    setTimeout(() => {
-      setPowerUps((prevPowerUps) => prevPowerUps.filter((powerUp) => powerUp.id !== newPowerUp.id));
-    }, powerUpDuration);
+  const handleGameOver = () => {
+    setGameOver(true);
+    setGameStarted(false);
+    stopMusic();
   };
 
-  // Handle mouse movement
-  const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
-    if (!gameAreaRef.current) return;
-    const rect = gameAreaRef.current.getBoundingClientRect();
-    setMousePosition({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
-  };
-
-  // Handle mouse clicks
   const handleMouseClick = (e: MouseEvent<HTMLDivElement>) => {
     if (gameOver || !gameStarted) return;
 
@@ -243,9 +139,7 @@ const Game: React.FC = () => {
       setLives((prevLives) => {
         const newLives = prevLives - 1;
         if (newLives <= 0) {
-          setGameOver(true);
-          setGameStarted(false);
-          stopMusic();
+          handleGameOver();
         }
         return newLives;
       });
@@ -260,325 +154,162 @@ const Game: React.FC = () => {
     });
   };
 
-  // Handle target clicks
-  const handleTargetClick = (id: number, e: MouseEvent<HTMLDivElement>) => {
-    if (gameOver) return;
-
+  const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
     if (!gameAreaRef.current) return;
     const rect = gameAreaRef.current.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
-    setLaser({
-      startX: mousePosition.x,
-      startY: mousePosition.y,
-      endX: clickX,
-      endY: clickY,
-      timestamp: Date.now(),
+    setMousePosition({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
     });
+  };
 
-    setTargets((prevTargets) => {
-      const clickedTarget = prevTargets.find((target) => target.id === id);
+  const renderLaser = () => {
+    if (!laser) return null;
+    const duration = 300;
+    if (Date.now() - laser.timestamp > duration) return null;
 
-      if (!clickedTarget) return prevTargets;
+    return (
+      <div
+        className="laser"
+        style={{
+          position: 'absolute',
+          left: laser.startX,
+          top: laser.startY,
+          width: Math.sqrt(
+            Math.pow(laser.endX - laser.startX, 2) +
+            Math.pow(laser.endY - laser.startY, 2)
+          ),
+          height: 2,
+          transform: `rotate(${Math.atan2(
+            laser.endY - laser.startY,
+            laser.endX - laser.startX
+          )}rad)`,
+          transformOrigin: '0 0',
+          backgroundColor: 'red',
+        }}
+      />
+    );
+  };
 
-      // Handle boss targets
-      if (clickedTarget.type === 'boss' && clickedTarget.health) {
-        const updatedHealth = clickedTarget.health - 1;
+  const spawnTarget = () => {
+    const size = Math.random() < bossSpawnRate ? 80 : targetSize;
+    const type = Math.random() < bossSpawnRate ? 'boss' : 'normal';
+    const health = type === 'boss' ? 5 : undefined;
+    
+    const newTarget: Target = {
+      x: Math.random() * (gameWidth - size),
+      y: Math.random() * (gameHeight - size),
+      dx: (Math.random() - 0.5) * targetSpeed,
+      dy: (Math.random() - 0.5) * targetSpeed,
+      id: Date.now(),
+      color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+      rotation: 0,
+      spawnTime: Date.now(),
+      type,
+      size,
+      health,
+    };
+    
+    setTargets((prev) => [...prev, newTarget]);
+  };
 
-        // If boss is defeated
-        if (updatedHealth <= 0) {
-          return prevTargets
-            .map((target) =>
-              target.id === id ? { ...target, isPopping: true, health: 0 } : target
-            )
-            .filter((target) => !(target.id === id && target.isPopping));
-        }
+  const spawnPowerUp = () => {
+    const types: PowerUpType[] = [
+      'extra-life',
+      'time-freeze',
+      'double-points',
+      'skull',
+      'lightning',
+      'lava-shield',
+    ];
+    const type = types[Math.floor(Math.random() * types.length)];
+    
+    const newPowerUp: PowerUp = {
+      x: Math.random() * (gameWidth - targetSize),
+      y: Math.random() * (gameHeight - targetSize),
+      dx: (Math.random() - 0.5) * targetSpeed,
+      dy: (Math.random() - 0.5) * targetSpeed,
+      id: Date.now(),
+      type,
+      spawnTime: Date.now(),
+    };
+    
+    setPowerUps((prev) => [...prev, newPowerUp]);
+  };
 
-        // If boss is hit but not defeated
-        return prevTargets.map((target) =>
-          target.id === id ? { ...target, health: updatedHealth } : target
-        );
-      }
-
-      // Handle slime targets
-      if (clickedTarget.type === 'slime') {
-        const miniTarget1: Target = {
-          x: clickedTarget.x,
-          y: clickedTarget.y,
-          dx: (Math.random() - 0.5) * targetSpeed,
-          dy: (Math.random() - 0.5) * targetSpeed,
-          id: Date.now() + Math.random(),
-          color: '#FF66CC',
-          rotation: 0,
-          spawnTime: Date.now(),
-          type: 'mini',
-          size: targetSize / 2,
-        };
-
-        const miniTarget2: Target = {
-          x: clickedTarget.x,
-          y: clickedTarget.y,
-          dx: (Math.random() - 0.5) * targetSpeed,
-          dy: (Math.random() - 0.5) * targetSpeed,
-          id: Date.now() + Math.random(),
-          color: '#FF66CC',
-          rotation: 0,
-          spawnTime: Date.now(),
-          type: 'mini',
-          size: targetSize / 2,
-        };
-
-        return [
-          ...prevTargets.filter((target) => target.id !== id),
-          miniTarget1,
-          miniTarget2,
-        ];
-      }
-
-      // Handle regular targets
-      return prevTargets.map((target) =>
-        target.id === id ? { ...target, isPopping: true } : target
-      );
-    });
-
+  const handleTargetClick = (id: number, e: MouseEvent) => {
+    e.stopPropagation();
+    setTargets((prev) =>
+      prev.map((target) =>
+        target.id === id
+          ? { ...target, isPopping: true }
+          : target
+      )
+    );
+    
     setTimeout(() => {
-      setTargets((prevTargets) => {
-        const clickedTarget = prevTargets.find((target) => target.id === id);
-
-        if (!clickedTarget) return prevTargets;
-
-        // Add score for boss defeat
-        if (clickedTarget.type === 'boss' && clickedTarget.health === 0) {
-          setScore((prevScore) => prevScore + 10);
-          return prevTargets.filter((target) => target.id !== id);
-        }
-
-        // Handle regular target defeat
-        if (clickedTarget.isPopping) {
-          const updatedTargets = prevTargets.filter((target) => target.id !== id);
-          setScore((prevScore) => prevScore + (combo > 5 ? 2 : 1));
-          setCombo((prevCombo) => prevCombo + 1);
-          return updatedTargets;
-        }
-
-        return prevTargets;
-      });
+      setTargets((prev) => prev.filter((t) => t.id !== id));
+      setScore((prev) => prev + 10);
+      setCombo((prev) => prev + 1);
     }, 300);
   };
 
-  // Handle power-up clicks
-  const handlePowerUpClick = (id: number, e: MouseEvent<HTMLDivElement>) => {
-    if (gameOver) return;
+  const handlePowerUpClick = (id: number, e: MouseEvent) => {
+    e.stopPropagation();
+    const powerUp = powerUps.find((p) => p.id === id);
+    if (!powerUp) return;
 
-    if (!gameAreaRef.current) return;
-    const rect = gameAreaRef.current.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
-    setLaser({
-      startX: mousePosition.x,
-      startY: mousePosition.y,
-      endX: clickX,
-      endY: clickY,
-      timestamp: Date.now(),
-    });
-
-    const clickedPowerUp = powerUps.find((pu) => pu.id === id);
-    if (!clickedPowerUp) return;
-    setPowerUps((prevPowerUps) => prevPowerUps.filter((powerUp) => powerUp.id !== id));
-
-    switch (clickedPowerUp.type) {
+    switch (powerUp.type) {
       case 'extra-life':
-        setLives((prevLives) => prevLives + 1);
+        setLives((prev) => prev + 1);
         break;
       case 'time-freeze':
-        setCombo(0);
-        setTargets((prevTargets) =>
-          prevTargets.map((target) => ({
-            ...target,
-            dx: 0,
-            dy: 0,
-          }))
-        );
-        setTimeout(() => {
-          setTargets((prevTargets) =>
-            prevTargets.map((target) => ({
-              ...target,
-              dx: (Math.random() - 0.5) * targetSpeed,
-              dy: (Math.random() - 0.5) * targetSpeed,
-            }))
-          );
-        }, 5000);
+        // Implement time freeze logic
         break;
       case 'double-points':
-        setScore((prevScore) => prevScore + 10);
+        setScore((prev) => prev + 20);
         break;
       case 'skull':
-        setLives((prevLives) => Math.max(prevLives - 1, 0));
-        if (lives <= 1) {
-          setGameOver(true);
-          setGameStarted(false);
-          stopMusic();
-        }
+        setLives((prev) => Math.max(0, prev - 1));
         break;
       case 'lightning':
-        setTargets((currentTargets) =>
-          currentTargets.map((target) => ({
-            ...target,
-            isPopping: target.isImmune ? false : true,
-          }))
-        );
-        setTimeout(() => {
-          setTargets((currentTargets) => {
-            const nonImmuneTargets = currentTargets.filter((t) => !t.isImmune);
-            setScore((prevScore) => prevScore + nonImmuneTargets.length);
-            return currentTargets.filter((t) => t.isImmune);
-          });
-        }, 300);
+        setTargets([]);
+        setScore((prev) => prev + 50);
         break;
       case 'lava-shield':
-        const vulnerableTargets = targets.filter((t) => !t.isImmune);
-        const halfLength = Math.ceil(vulnerableTargets.length / 2);
-        setTargets((prevTargets) =>
-          prevTargets.map((target) => {
-            if (target.isImmune) return target;
-            const targetIndex = vulnerableTargets.indexOf(target);
-            return targetIndex < halfLength ? { ...target, isPopping: true } : target;
-          })
-        );
-        setTimeout(() => {
-          setTargets((prevTargets) => {
-            const remainingTargets = prevTargets.filter((t) => !t.isPopping);
-            setScore((prevScore) => prevScore + (prevTargets.length - remainingTargets.length));
-            setLives((prevLives) => prevLives + 2);
-            return remainingTargets;
-          });
-        }, 300);
-        break;
-      default:
+        setLives((prev) => prev + 2);
+        setScore((prev) => prev + 30);
+        setTargets((prev) => prev.filter((_, i) => i % 2 === 0));
         break;
     }
+
+    setPowerUps((prev) => prev.filter((p) => p.id !== id));
   };
 
-  // Render laser effect
-  const renderLaser = () => {
-    if (!laser) return null;
-
-    const age = Date.now() - laser.timestamp;
-    if (age > 600) {
-      setLaser(null);
-      return null;
-    }
-
-    const dx = laser.endX - laser.startX;
-    const dy = laser.endY - laser.startY;
-    const angle = Math.atan2(dy, dx);
-    const length = Math.sqrt(dx * dx + dy * dy);
-    const opacity = Math.max(0, 1 - age / 600);
-
-    return (
-      <>
-        <div
-          className="laser"
-          style={{
-            position: 'absolute',
-            left: laser.startX,
-            top: laser.startY,
-            transform: `rotate(${angle}rad)`,
-            transformOrigin: '0% 50%',
-            width: `${length}px`,
-            height: '6px',
-            background: 'linear-gradient(90deg, rgba(255,0,0,1) 0%, rgba(255,107,107,0.8) 100%)',
-            boxShadow: '0 0 20px #ff0000, 0 0 40px #ff6b6b',
-            opacity,
-            transition: 'opacity 0.1s ease-out',
-            zIndex: 1000,
-          }}
-        />
-        <div
-          className="impact"
-          style={{
-            position: 'absolute',
-            left: laser.endX - 30,
-            top: laser.endY - 30,
-            width: '60px',
-            height: '60px',
-            background: 'radial-gradient(circle, rgba(255,107,107,0.8) 0%, transparent 70%)',
-            opacity,
-            animation: 'impact 0.6s ease-out',
-          }}
-        />
-        <div
-          className="muzzle-flash"
-          style={{
-            position: 'absolute',
-            left: laser.startX - 16,
-            top: laser.startY - 16,
-            width: '32px',
-            height: '32px',
-            background: 'radial-gradient(circle, #ffffff 0%, #ff0000 50%, transparent 70%)',
-            opacity,
-            animation: 'muzzleFlash 0.4s ease-out',
-          }}
-        />
-      </>
-    );
-  };
-
-  // Start music
-  const startMusic = () => {
-    if (selectedSong.id === 1 && soundCloudRef.current) {
-      const widget = (window as any).SC.Widget(soundCloudRef.current);
-      widget.play();
-    } else if (audioPlayerRef.current) {
-      audioPlayerRef.current.audio.current.play();
-    }
-  };
-
-  // Stop music
-  const stopMusic = () => {
-    if (selectedSong.id === 1 && soundCloudRef.current) {
-      const widget = (window as any).SC.Widget(soundCloudRef.current);
-      widget.pause();
-    } else if (audioPlayerRef.current) {
-      audioPlayerRef.current.audio.current.pause();
-    }
-  };
-
-  // Start game
   const startGame = () => {
     setScore(0);
-    setLives(
-      difficulty === 'gabriel' ? 50 :
-      difficulty === 'easy' ? 10 :
-      difficulty === 'normal' ? 3 :
-      1
-    );
+    setLives(3);
+    setCombo(0);
     setGameOver(false);
+    setGameStarted(true);
     setTargets([]);
     setPowerUps([]);
-    setCombo(0);
-    setGameStarted(true);
+    setBossSpawnRate(0.03);
     startMusic();
   };
 
-  // Reset game
   const resetGame = () => {
-    setGameStarted(false);
     setScore(0);
-    setLives(
-      difficulty === 'gabriel' ? 50 :
-      difficulty === 'easy' ? 10 :
-      difficulty === 'normal' ? 3 :
-      1
-    );
+    setLives(0);
+    setCombo(0);
     setGameOver(false);
+    setGameStarted(false);
     setTargets([]);
     setPowerUps([]);
-    setCombo(0);
+    setBossSpawnRate(0.03);
     stopMusic();
   };
 
-  // Game loop for target and power-up movement
   useEffect(() => {
     if (gameStarted && !gameOver) {
       const movementInterval = setInterval(() => {
@@ -609,7 +340,7 @@ const Game: React.FC = () => {
           });
 
           const expiredTargets = updatedTargets.filter(
-            (target) => Date.now() - target.spawnTime > 20000 // Decreased to 20 seconds
+            (target) => Date.now() - target.spawnTime > 30000
           );
 
           if (expiredTargets.length > 0) {
@@ -624,15 +355,11 @@ const Game: React.FC = () => {
                 current.filter((t) => !expiredTargets.find((et) => et.id === t.id))
               );
 
-              setLives((prevLives) => {
-                const newLives = prevLives - expiredTargets.length;
-                if (newLives <= 0) {
-                  setGameOver(true);
-                  setGameStarted(false);
-                  stopMusic();
-                }
-                return Math.max(newLives, 0);
-              });
+              const newLives = lives - expiredTargets.length;
+              setLives(newLives);
+              if (newLives <= 0) {
+                handleGameOver();
+              }
             }, 300);
           }
 
@@ -680,20 +407,18 @@ const Game: React.FC = () => {
         clearInterval(powerUpIntervalId);
       };
     }
-  }, [gameStarted, gameOver]);
+  }, [gameStarted, gameOver, lives]);
 
-  // Progressive difficulty: Increase boss spawn rate over time
   useEffect(() => {
     if (gameStarted && !gameOver) {
       const bossRateInterval = setInterval(() => {
-        setBossSpawnRate((prev) => Math.min(prev + 0.01, 0.2)); // Increase by 1% up to max 20%
-      }, 30000); // Every 30 seconds
+        setBossSpawnRate((prev) => Math.min(prev + 0.01, 0.2));
+      }, 30000);
 
       return () => clearInterval(bossRateInterval);
     }
   }, [gameStarted, gameOver]);
 
-  // Render targets
   const renderTarget = (target: Target) => {
     if (target.type === 'boss') {
       return (
@@ -799,27 +524,15 @@ const Game: React.FC = () => {
       )}
 
       <div className="hidden">
-        {selectedSong.id === 1 ? (
-          <iframe
-            ref={soundCloudRef}
-            width="0"
-            height="0"
-            scrolling="no"
-            frameBorder="no"
-            allow="autoplay"
-            src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(selectedSong.src)}&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true`}
-          ></iframe>
-        ) : (
-          <AudioPlayer
-            ref={audioPlayerRef}
-            src={selectedSong.src}
-            autoPlay={false}
-            loop={true}
-            volume={0.5}
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-          />
-        )}
+        <iframe
+          ref={soundCloudRef}
+          width="0"
+          height="0"
+          scrolling="no"
+          frameBorder="no"
+          allow="autoplay"
+          src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(selectedSong.src)}&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true`}
+        ></iframe>
       </div>
 
       <div
@@ -830,7 +543,7 @@ const Game: React.FC = () => {
           height: gameHeight,
           position: 'relative',
           margin: '0 auto',
-          touchAction: 'none', // Prevent default touch behaviors
+          touchAction: 'none',
         }}
         onMouseMove={handleMouseMove}
         onClick={handleMouseClick}
