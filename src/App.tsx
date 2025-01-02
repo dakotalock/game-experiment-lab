@@ -40,7 +40,7 @@ const Game: React.FC = () => {
   const [targets, setTargets] = useState<Target[]>([]);
   const [powerUps, setPowerUps] = useState<PowerUp[]>([]);
   const [combo, setCombo] = useState<number>(0);
-  const [difficulty, setDifficulty] = useState<'easy' | 'normal' | 'hard'>('normal');
+  const [difficulty, setDifficulty] = useState<'gabriel' | 'easy' | 'normal' | 'hard'>('normal');
   const [showInstructions, setShowInstructions] = useState<boolean>(false);
   const [bossSpawnRate, setBossSpawnRate] = useState<number>(0.03);
   const soundCloudRef = useRef<HTMLIFrameElement>(null);
@@ -582,6 +582,7 @@ const Game: React.FC = () => {
   const startGame = () => {
     setScore(0);
     setLives(
+      difficulty === 'gabriel' ? 50 : // Gabriel mode with 50 lives
       difficulty === 'easy' ? 10 :
       difficulty === 'normal' ? 3 :
       1
@@ -598,6 +599,7 @@ const Game: React.FC = () => {
     setGameStarted(false);
     setScore(0);
     setLives(
+      difficulty === 'gabriel' ? 50 : // Gabriel mode with 50 lives
       difficulty === 'easy' ? 10 :
       difficulty === 'normal' ? 3 :
       1
@@ -904,6 +906,12 @@ const Game: React.FC = () => {
               Start Game
             </button>
             <div className="flex space-x-4">
+              <button
+                className={`difficulty-button ${difficulty === 'gabriel' ? 'active' : ''}`}
+                onClick={() => setDifficulty('gabriel')}
+              >
+                Gabriel Mode
+              </button>
               <button
                 className={`difficulty-button ${difficulty === 'easy' ? 'active' : ''}`}
                 onClick={() => setDifficulty('easy')}
