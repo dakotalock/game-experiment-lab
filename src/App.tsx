@@ -27,6 +27,16 @@ interface PowerUp {
   id: number;
   type: PowerUpType;
   spawnTime: number;
+  animationState?: {
+    bolts: Array<{
+      startX: number;
+      startY: number;
+      endX: number;
+      endY: number;
+      opacity: number;
+      timestamp: number;
+    }>;
+  };
 }
 
 const Game: React.FC = () => {
@@ -381,6 +391,68 @@ const Game: React.FC = () => {
     }, 300);
   };
 
+  const handleLightningAnimation = (powerUp: PowerUp) => {
+    const numBolts = 4 + Math.floor(Math.random() * 3);
+    const bolts = [];
+  
+    for (let i = 0; i < numBolts; i++) {
+      const angle = (2 * Math.PI * i) / numBolts;
+      const distance = 100; // Adjust based on game size
+      
+      bolts.push({
+        startX: powerUp.x + targetSize / 2,
+        startY: powerUp.y + targetSize / 2,
+        endX: powerUp.x + targetSize / 2 + Math.cos(angle) * distance,
+        endY: powerUp.y + targetSize / 2 + Math.sin(angle) * distance,
+        opacity: 1,
+        timestamp: Date.now()
+      });
+    }
+
+    setPowerUps(current => 
+      current.map(p => 
+        p.id === powerUp.id 
+          ? { ...p, animationState: { bolts } }
+          : p
+      )
+    );
+  };
+
+  const renderLightningAnimation = (powerUp: PowerUp) => {
+    if (!powerUp.animationState?.bolts) return null;
+
+    return powerUp.animationState.bolts.map((bolt, index) => {
+      const age = Date.now() - bolt.timestamp;
+      if (age > 300) return null; // Animation duration
+
+      const opacity = Math.max(0, 1 - age / 300);
+
+      return (
+        <div
+          key={index}
+          style={{
+            position: 'absolute',
+            left: bolt.startX,
+            top: bolt.startY,
+            width: '2px',
+            height: `${Math.sqrt(
+              Math.pow(bolt.endX - bolt.startX, 2) + 
+              Math.pow(bolt.endY - bolt.startY, 2)
+            )}px`,
+            background: `linear-gradient(to right, rgba(255,255,0,${opacity}), rgba(255,255,255,${opacity}))`,
+            transform: `rotate(${Math.atan2(
+              bolt.endY - bolt.startY,
+              bolt.endX - bolt.startX
+            )}rad)`,
+            transformOrigin: '0 0',
+            filter: `blur(1px) brightness(1.5)`,
+            zIndex: 1000
+          }}
+        />
+      );
+    });
+  };
+
   const handlePowerUpClick = (id: number, e: MouseEvent<HTMLDivElement>) => {
     if (gameOver) return;
 
@@ -433,6 +505,7 @@ const Game: React.FC = () => {
         }
         break;
       case 'lightning':
+        handleLightningAnimation(clickedPowerUp);
         setTargets((currentTargets) =>
           currentTargets.map((target) => ({
             ...target,
@@ -855,6 +928,8 @@ const Game: React.FC = () => {
              powerUp.type === 'lightning' ? '⚡️' : '🛡️'}
           </div>
         ))}
+
+        {powerUps.map((powerUp) => renderLightningAnimation(powerUp))}
 
         <div
           className="crosshair"
