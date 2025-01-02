@@ -700,9 +700,11 @@ const Game: React.FC = () => {
                 return newLives;
               });
             }, 300); // Match the duration of the pop animation
+
+            return poppedTargets; // Return the updated targets with popping state
           }
 
-          return expiredTargets.length > 0 ? poppedTargets : updatedTargets;
+          return updatedTargets; // Return the updated targets if no expired targets
         });
       }, 20);
 
