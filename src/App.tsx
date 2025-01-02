@@ -393,27 +393,32 @@ const Game: React.FC = () => {
 
   const handleLightningAnimation = (powerUp: PowerUp) => {
     const numBolts = 4 + Math.floor(Math.random() * 3);
-    const bolts = [];
-  
+    const bolts: {
+      startX: number;
+      startY: number;
+      endX: number;
+      endY: number;
+      opacity: number;
+      timestamp: number;
+    }[] = [];
+
     for (let i = 0; i < numBolts; i++) {
       const angle = (2 * Math.PI * i) / numBolts;
       const distance = 100; // Adjust based on game size
-      
+
       bolts.push({
         startX: powerUp.x + targetSize / 2,
         startY: powerUp.y + targetSize / 2,
         endX: powerUp.x + targetSize / 2 + Math.cos(angle) * distance,
         endY: powerUp.y + targetSize / 2 + Math.sin(angle) * distance,
         opacity: 1,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     }
 
-    setPowerUps(current => 
-      current.map(p => 
-        p.id === powerUp.id 
-          ? { ...p, animationState: { bolts } }
-          : p
+    setPowerUps((current) =>
+      current.map((p) =>
+        p.id === powerUp.id ? { ...p, animationState: { bolts } } : p
       )
     );
   };
