@@ -674,56 +674,30 @@ const Game: React.FC = () => {
           );
 
           if (expiredTargets.length > 0) {
-            // First set popping animation
-            setTargets(current => 
-              current.map(target => ({
-                ...target,
-                isPopping: expiredTargets.find(et => et.id === target.id) ? true : target.isPopping
-              }))
+            // Mark expired targets as popping
+            const poppedTargets = updatedTargets.map((target) =>
+              expiredTargets.find((et) => et.id === target.id)
+                ? { ...target, isPopping: true }
+                : target
             );
 
-            // After animation, remove targets and subtract one life per target
+            // After the animation, remove the targets and deduct lives
             setTimeout(() => {
-              setTargets(current => current.filter(t => !expiredTargets.find(et => et.id === t.id)));
-              
-              // Subtract one life per expired target
-              setLives(prevLives => {
+              setTargets((current) =>
+                current.filter((t) => !expiredTargets.find((et) => et.id === t.id))
+              );
+
+              setLives((prevLives) => {
                 const newLives = Math.max(prevLives - expiredTargets.length, 0);
                 if (newLives <= 0) {
                   handleGameOver();
                 }
                 return newLives;
               });
-            }, 300);
+            }, 300); // Match the duration of the pop animation
           }
 
-          return updatedTargets;
-        });
-
-        setPowerUps((prevPowerUps) => {
-          const updatedPowerUps = prevPowerUps.map((powerUp) => {
-            let { x, y, dx, dy } = powerUp;
-
-            x += dx;
-            y += dy;
-
-            if (x < 0 || x > gameWidth - targetSize) {
-              dx = -dx;
-              x = x < 0 ? 0 : gameWidth - targetSize;
-            }
-            if (y < 0 || y > gameHeight - targetSize) {
-              dy = -dy;
-              y = y < 0 ? 0 : gameHeight - targetSize;
-            }
-
-            return { ...powerUp, x, y };
-          });
-
-          const filteredPowerUps = updatedPowerUps.filter(
-            (powerUp) => Date.now() - powerUp.spawnTime <= powerUpDuration
-          );
-
-          return filteredPowerUps;
+          return expiredTargets.length > 0 ? poppedTargets : updatedTargets;
         });
       }, 20);
 
