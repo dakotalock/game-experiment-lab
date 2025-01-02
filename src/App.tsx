@@ -416,11 +416,21 @@ const Game: React.FC = () => {
       });
     }
 
+    // Set the bolts for the animation
     setPowerUps((current) =>
       current.map((p) =>
         p.id === powerUp.id ? { ...p, animationState: { bolts } } : p
       )
     );
+
+    // Remove the bolts after the animation completes
+    setTimeout(() => {
+      setPowerUps((current) =>
+        current.map((p) =>
+          p.id === powerUp.id ? { ...p, animationState: undefined } : p
+        )
+      );
+    }, 300); // Match the duration of the animation
   };
 
   const renderLightningAnimation = (powerUp: PowerUp) => {
@@ -679,14 +689,13 @@ const Game: React.FC = () => {
           );
 
           if (expiredTargets.length > 0) {
-            // Mark expired targets as popping
-            const poppedTargets = updatedTargets.map((target) =>
-              expiredTargets.find((et) => et.id === target.id)
-                ? { ...target, isPopping: true }
-                : target
-            );
+            // First set popping animation
+            const poppedTargets = updatedTargets.map((target) => ({
+              ...target,
+              isPopping: expiredTargets.find((et) => et.id === target.id) ? true : target.isPopping,
+            }));
 
-            // After the animation, remove the targets and deduct lives
+            // After animation, remove targets and update lives
             setTimeout(() => {
               setTargets((current) =>
                 current.filter((t) => !expiredTargets.find((et) => et.id === t.id))
