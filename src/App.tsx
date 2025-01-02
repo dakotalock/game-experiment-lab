@@ -409,8 +409,6 @@ const Game: React.FC = () => {
   };
 
   const renderLightningAnimation = (powerUp: PowerUp) => {
-    if (!powerUp.animationState?.active) return null;
-
     return (
       <div
         className="lightning-active"
@@ -645,7 +643,30 @@ const Game: React.FC = () => {
           );
 
           if (expiredTargets.length > 0) {
-            expiredTargets.forEach((target) => handleTargetExpiration(target));
+            // Trigger the popping animation before filtering
+            setTargets((prev) =>
+              prev.map((t) =>
+                expiredTargets.some((et) => et.id === t.id)
+                  ? { ...t, isPopping: true }
+                  : t
+              )
+            );
+
+            // Remove the targets after the animation completes
+            setTimeout(() => {
+              setTargets((current) =>
+                current.filter((t) => !expiredTargets.some((et) => et.id === t.id))
+              );
+
+              // Deduct lives for expired targets
+              setLives((prevLives) => {
+                const newLives = prevLives - expiredTargets.length;
+                if (newLives <= 0) {
+                  handleGameOver();
+                }
+                return newLives;
+              });
+            }, 300); // Match the CSS animation duration
           }
 
           return updatedTargets;
@@ -831,29 +852,30 @@ const Game: React.FC = () => {
         {targets.map((target) => renderTarget(target))}
 
         {powerUps.map((powerUp) => (
-          <div
-            key={powerUp.id}
-            className={`power-up power-up-${powerUp.type}`}
-            style={{
-              position: 'absolute',
-              left: `${powerUp.x}px`,
-              top: `${powerUp.y}px`,
-              backgroundColor: powerUp.type === 'time-freeze' ? 'black' : undefined,
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              handlePowerUpClick(powerUp.id, e);
-            }}
-          >
-            {powerUp.type === 'extra-life' ? '+' :
-             powerUp.type === 'time-freeze' ? '❄️' :
-             powerUp.type === 'double-points' ? '+10' :
-             powerUp.type === 'skull' ? '🧙‍♀️' :
-             powerUp.type === 'lightning' ? '⚡️' : '🛡️'}
-          </div>
+          <>
+            <div
+              key={powerUp.id}
+              className={`power-up power-up-${powerUp.type}`}
+              style={{
+                position: 'absolute',
+                left: `${powerUp.x}px`,
+                top: `${powerUp.y}px`,
+                backgroundColor: powerUp.type === 'time-freeze' ? 'black' : undefined,
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePowerUpClick(powerUp.id, e);
+              }}
+            >
+              {powerUp.type === 'extra-life' ? '+' :
+               powerUp.type === 'time-freeze' ? '❄️' :
+               powerUp.type === 'double-points' ? '+10' :
+               powerUp.type === 'skull' ? '🧙‍♀️' :
+               powerUp.type === 'lightning' ? '⚡️' : '🛡️'}
+            </div>
+            {powerUp.animationState?.active && renderLightningAnimation(powerUp)}
+          </>
         ))}
-
-        {powerUps.map((powerUp) => renderLightningAnimation(powerUp))}
 
         <div
           className="crosshair"
